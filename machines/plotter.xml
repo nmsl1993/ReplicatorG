@@ -1,0 +1,24 @@
+<?xml version="1.1" encoding="utf-8"?>
+<machines>
+	<!-- FTW Plotter dev -->
+	<machine>
+		<name>FTW Plotter</name>
+		<geometry type="cartesian">
+			<!-- different pulleys on X and Y axii -->
+			<axis id="x" length="100" maxfeedrate="5000" stepspermm="9.805" endstops="min"/> 
+			<axis id="y" length="100" maxfeedrate="5000" stepspermm="9.805" endstops="min"/>
+		</geometry>
+		<tools></tools>
+		<clamps></clamps>
+		<driver name="sanguino3g">
+			<!-- optional: <portname>COM1</portname> -->
+			<rate>38400</rate>
+		</driver>
+		<warmup>
+		</warmup>
+		<cooldown>
+(Turn off steppers after a build.)
+M18
+		</cooldown>
+	</machine>
+</machines>
