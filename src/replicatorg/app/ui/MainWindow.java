@@ -171,6 +171,8 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	Image icon;
 
 	MachineController machine;
+	
+	RemoteListener listener;
 
 	static public final KeyStroke WINDOW_CLOSE_KEYSTROKE = KeyStroke
 			.getKeyStroke('W', Toolkit.getDefaultToolkit()
@@ -2585,6 +2587,14 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 		
 		if (!connect) return;
+		
+		// Add in a socket listener, with full access to the device!
+		if (this.listener != null) {
+			this.listener.interrupt();
+			this.listener = null;
+		}
+		this.listener = new RemoteListener(machine.driver, 2000);
+		this.listener.start();
 
 		if (machine.driver instanceof UsesSerial) {
 			UsesSerial us = (UsesSerial)machine.driver;
