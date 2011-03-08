@@ -34,6 +34,14 @@ public class RemoteListener extends Thread {
 			Base.logger.info("Pen up!");
 			driver.disableFan();
 		}
+		else if (command.contentEquals("LE")) {
+			Base.logger.info("Lights on!");
+			driver.openValve();
+		}
+		else if (command.contentEquals("LD")) {
+			Base.logger.info("Lights disable!");
+			driver.closeValve();
+		}
 		else if(command.startsWith("PA")) {
 			String bits[] = command.split(" ");
 			
