@@ -3,7 +3,7 @@ package replicatorg.app.ui;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+//import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.EnumSet;
@@ -18,12 +18,16 @@ import replicatorg.util.Point5d;
 public class RemoteListener extends Thread {
 	Driver driver;
 	int port;
+	boolean running;
 	
 	ServerSocket serverSocket;
+	Socket clientSocket;
 	
 	public RemoteListener(Driver driver, int port) {
 		this.driver = driver;
 		this.port = port;
+		
+		running = true;
 	}
 	
 	private void runCommand(String command) throws RetryException {
@@ -69,25 +73,68 @@ public class RemoteListener extends Thread {
 		}
 	}
 	
+	// TODO: What /should/ this be called?? It should also be thread-safe or something.
+	public void shutdown() {
+		if (clientSocket != null) {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				Base.logger.severe("couldnt shutdown client listener");
+			}
+		}
+		
+		if (serverSocket != null) {
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				Base.logger.severe("couldnt shutdown socket server");
+			}
+		}
+		running = false;
+		interrupt();
+	}
+	
 	public void run() {
-		while (true) {
+		
+		// Try to make a connection; if we can't, stop!
+		try {
+			serverSocket = new ServerSocket(port);
+		} catch (IOException e) {
+			Base.logger.severe("Error Setting up port: " + e.getMessage());
+			return;
+		}	
+		
+		while (running) {
 			Socket clientSocket = null;
 			
 			try {
-			    serverSocket = new ServerSocket(port);
-			    
-			    clientSocket = serverSocket.accept();
-			    
-				PrintWriter out = new PrintWriter(
-				        clientSocket.getOutputStream(), true);
-	
-				BufferedReader in = new BufferedReader(
-		                  new InputStreamReader(
-		                      clientSocket.getInputStream()));
-				String inputLine, outputLine;
-				
-				//initiate conversation with client
-				
+				clientSocket = serverSocket.accept();
+			} catch (IOException e1) {
+				Base.logger.severe("Error accepting client socket: " + e1.getMessage());
+				break;
+			}
+			Base.logger.info("Accepted connection from: " + clientSocket.getRemoteSocketAddress());
+			
+//				PrintWriter out = new PrintWriter(
+//				        clientSocket.getOutputStream(), true);
+
+			
+			BufferedReader in;
+			try {
+				in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			} catch (IOException e1) {
+				Base.logger.severe("Error creating buffered reader: " + e1.getMessage());
+				break;
+			}
+			
+			String inputLine;
+//				String outputLine;
+			
+			//initiate conversation with client
+			
+			try {
 				while ((inputLine = in.readLine()) != null) {
 					boolean finished = false;
 					while (!finished) {
@@ -98,24 +145,19 @@ public class RemoteListener extends Thread {
 							Base.logger.severe("retrying command: " + inputLine);
 						}
 					}
-				}				    
-			    
-			    serverSocket.close();
-			} catch (IOException e) {
-			    Base.logger.severe("oops! This error: " + e.getMessage());
-			}
-			
-			if (serverSocket != null) {
-				try {
-					serverSocket.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
+			} catch (IOException e) {
+				Base.logger.severe("Got IO exception while trying to read: " + e.getMessage());
 			}
-			
+		}
+		
+		// If we need to clean up, do it now.
+		if (serverSocket != null) {
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				Base.logger.severe("Error closing port: " + e.getMessage());
+			}
 		}
 	}
-	
-	
 }

@@ -173,6 +173,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	MachineController machine;
 	
 	RemoteListener listener;
+	int listenerCount = 0;
 
 	static public final KeyStroke WINDOW_CLOSE_KEYSTROKE = KeyStroke
 			.getKeyStroke('W', Toolkit.getDefaultToolkit()
@@ -1360,6 +1361,12 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			// machine already disconnected
 		} else {
 			machine.disconnect();
+		}
+		
+		// Turn off the socket listener
+		if (this.listener != null) {
+			this.listener.shutdown();
+			this.listener.interrupt();
 		}
 	}
 	
@@ -2589,11 +2596,9 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		if (!connect) return;
 		
 		// Add in a socket listener, with full access to the device!
-		if (this.listener != null) {
-			this.listener.interrupt();
-			this.listener = null;
-		}
 		this.listener = new RemoteListener(machine.driver, 2000);
+		this.listener.setName("Listener #" + this.listenerCount);
+		this.listenerCount += 1;
 		this.listener.start();
 
 		if (machine.driver instanceof UsesSerial) {
