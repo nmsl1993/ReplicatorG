@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.EnumSet;
 
 import replicatorg.app.Base;
 import replicatorg.drivers.Driver;
@@ -34,6 +35,13 @@ public class RemoteListener extends Thread {
 			Base.logger.info("Pen up!");
 			driver.disableFan();
 		}
+		else if (command.contentEquals("HOME")) {
+			Base.logger.info("Home!");
+			EnumSet<AxisId> r = EnumSet.noneOf(AxisId.class);
+			r.add(AxisId.X);
+			driver.homeAxes(r, false, 3000);
+			driver.setCurrentPosition(new Point5d());
+		}
 		else if (command.contentEquals("LE")) {
 			Base.logger.info("Lights on!");
 			driver.openValve();
@@ -47,10 +55,14 @@ public class RemoteListener extends Thread {
 			
 			if (bits.length == 3) {
 				Point5d point = new Point5d();
-				point.setAxis(AxisId.Y , Double.parseDouble(bits[1]));
-				point.setAxis(AxisId.X , Double.parseDouble(bits[2]));
+				point.setAxis(AxisId.X , Double.parseDouble(bits[1]));
+				point.setAxis(AxisId.Y , Double.parseDouble(bits[2]));
 				driver.queuePoint(point);
 			}
+		}
+		else if (command.contentEquals("SD")) {
+			Base.logger.info("Steppers disable!");
+			driver.disableDrives();
 		}
 		else {
 			Base.logger.severe("Didn't understand command:" + command);
@@ -86,7 +98,7 @@ public class RemoteListener extends Thread {
 			    
 			    serverSocket.close();
 			} catch (IOException e) {
-			    Base.logger.severe("oops!");
+			    Base.logger.severe("oops! This error: " + e.getMessage());
 			}
 			
 			if (serverSocket != null) {
@@ -100,4 +112,6 @@ public class RemoteListener extends Thread {
 			
 		}
 	}
+	
+	
 }
