@@ -89,10 +89,14 @@ public class RemoteListener extends Thread {
 				//initiate conversation with client
 				
 				while ((inputLine = in.readLine()) != null) {
-					try {
-						runCommand(inputLine);						
-					} catch (RetryException e) {
-						Base.logger.severe("dropped command: " + inputLine);
+					boolean finished = false;
+					while (!finished) {
+						try {
+							runCommand(inputLine);
+							finished = true;
+						} catch (RetryException e) {
+							Base.logger.severe("retrying command: " + inputLine);
+						}
 					}
 				}				    
 			    
