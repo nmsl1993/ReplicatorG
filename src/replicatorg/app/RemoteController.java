@@ -48,10 +48,10 @@ public class RemoteController extends Thread {
 		if (target.contentEquals("direct")) {
 			Base.getEditor().handleBuild();
 		}
-		if (target.contentEquals("file")) {
+		else if (target.contentEquals("file")) {
 			Base.getEditor().handleBuildToFile(fileName);
 		}
-		if (target.contentEquals("remote_file")) {
+		else if (target.contentEquals("remote_file")) {
 			Base.getEditor().handleUpload(fileName);
 		}
 		else {
