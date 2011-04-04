@@ -527,6 +527,8 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 	}
 	
+	ToolpathGeneratorThread tgt;
+	
 	public void runToolpathGenerator(boolean generate) {
 		// Check for modified STL
 		if (build.getModel().isModified()) {
@@ -543,9 +545,16 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 		ToolpathGenerator generator = ToolpathGeneratorFactory.createSelectedGenerator();
 	
-		ToolpathGeneratorThread tgt = new ToolpathGeneratorThread(this, generator, build, generate);
+		tgt = new ToolpathGeneratorThread(this, generator, build, generate);
 		tgt.addListener(this);
 		tgt.start();
+	}
+	
+	public boolean toolpathGeneratorBusy() {
+		if (tgt == null) {
+			return false;
+		}
+		return tgt.isAlive();
 	}
 		
 	// ...................................................................

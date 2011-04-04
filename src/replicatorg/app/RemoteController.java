@@ -90,6 +90,28 @@ public class RemoteController extends Thread {
 				Base.logger.fine("Attempting to build to target: " + target + " with filename: " + fileName);
 				doBuild(target, fileName);
 			}
+			// TODO: This goes away.
+			else if (command.contentEquals("printToFile")) {
+				// First open the file
+				String inputFile = rootNode.path("inputFile").getTextValue();
+				Base.logger.fine("Attempting to open file: " + inputFile);
+				doOpenFile(inputFile);
+				
+				// Next, skein it
+				Base.logger.fine("Attempting to skein file");
+				doSkein();
+				
+				// TODO: wait for skein to finish, how?
+				while (Base.getEditor().toolpathGeneratorBusy()) {
+					// la la la
+				}
+				
+				// Finally, print it.
+				String destinationFile = rootNode.path("destinationFile").getTextValue();
+				
+				Base.logger.fine("Attempting to build to file: " + destinationFile);
+				doBuild("file", destinationFile);
+			}
 			else {
 				Base.logger.severe("Didn't understand command: " + command);
 			}
