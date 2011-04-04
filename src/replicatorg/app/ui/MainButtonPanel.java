@@ -237,9 +237,9 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		} else if (e.getSource() == buildButton) {
 			editor.handleBuild();
 		} else if (e.getSource() == uploadButton) {
-			editor.handleUpload();
+			editor.handleUpload(null);
 		} else if (e.getSource() == fileButton) {
-			editor.handleBuildToFile();
+			editor.handleBuildToFile(null);
 		} else if (e.getSource() == playbackButton) {
 			editor.handlePlayback();
 		} else if (e.getSource() == pauseButton) {

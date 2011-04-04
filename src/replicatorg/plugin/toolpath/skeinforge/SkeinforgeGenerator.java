@@ -240,7 +240,35 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 		}
 	}
 	
+	public boolean defaultConfigure() {
+		return false;
+	}
 
+	public boolean invisibleConfigure(Frame parent) {
+		// First check for Python.
+		boolean hasPython = PythonUtils.interactiveCheckVersion(parent,
+				"Generating gcode", new PythonUtils.Version(2, 5, 0),
+				new PythonUtils.Version(3, 0, 0));
+		if (!hasPython) {
+			return false;
+		}
+		boolean hasTkInter = PythonUtils.interactiveCheckTkInter(parent,
+				"Generating gcode");
+		if (!hasTkInter) {
+			return false;
+		}
+		ConfigurationDialog cd = new ConfigurationDialog(parent, this);
+		double x = parent.getBounds().getCenterX();
+		double y = parent.getBounds().getCenterY();
+		cd.pack();
+		x -= cd.getWidth() / 2.0;
+		y -= cd.getHeight() / 2.0;
+		cd.setLocation((int) x, (int) y);
+		
+		cd.setDefaultConfiguration();
+		return true;
+	}
+	
 	public boolean visualConfigure(Frame parent) {
 		// First check for Python.
 		boolean hasPython = PythonUtils.interactiveCheckVersion(parent,
@@ -261,7 +289,9 @@ public abstract class SkeinforgeGenerator extends ToolpathGenerator {
 		x -= cd.getWidth() / 2.0;
 		y -= cd.getHeight() / 2.0;
 		cd.setLocation((int) x, (int) y);
+		
 		cd.setVisible(true);
+		
 		return configSuccess;
 	}
 

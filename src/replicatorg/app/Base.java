@@ -248,7 +248,7 @@ public class Base {
 	/**
 	 * The main UI window.
 	 */
-	MainWindow editor = null;
+	static MainWindow editor = null;
 
 	private static final String[] supportedExtensions = {
 			"gcode", "ngc",
@@ -975,4 +975,8 @@ public class Base {
 		return machine;
 	}
 
+	// TODO: this is a hack??
+	static public MainWindow getEditor() {
+		return editor;
+	}
 }

@@ -73,6 +73,16 @@ class ConfigurationDialog extends JDialog {
 		parentGenerator = null;
 	}
 
+	public void setDefaultConfiguration() {
+		int idx = prefList.getSelectedIndex();
+		Profile p = getListedProfile(idx);
+		Base.preferences.put("lastGeneratorProfileSelected",p.toString());
+		parentGenerator.get().configSuccess = true;
+		parentGenerator.get().profile = p.getFullPath();
+		setVisible(false);
+		SkeinforgeGenerator.setSelectedProfile(p.toString());
+	}
+	
 	final JList prefList = new JList();
 
 	private Profile getListedProfile(int idx) {

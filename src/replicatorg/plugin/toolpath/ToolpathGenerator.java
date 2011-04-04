@@ -54,4 +54,10 @@ public abstract class ToolpathGenerator {
 			listener.generationComplete(completion, details);
 		}
 	}
+
+	public boolean invisibleConfigure(Frame parent) {
+		assert parent != null;
+		assert model != null;
+		return true;
+	}
 }

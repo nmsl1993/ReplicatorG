@@ -14,11 +14,13 @@ public class ToolpathGeneratorThread extends Thread {
 	private Frame parent;
 	private ToolpathGenerator generator;
 	private Build build;
+	private boolean generate;
 	
-	public ToolpathGeneratorThread(Frame parent, ToolpathGenerator generator, Build build) {
+	public ToolpathGeneratorThread(Frame parent, ToolpathGenerator generator, Build build, boolean generate) {
 		this.parent = parent;
 		this.generator = generator;
 		this.build = build;
+		this.generate = generate;
 	}
 	
 	public void addListener(ToolpathGenerator.GeneratorListener listener) {
@@ -31,7 +33,14 @@ public class ToolpathGeneratorThread extends Thread {
 		if (parent != null) {
 			// Configure, if possible
 			progressDialog = new ProgressDialog(parent,build,this);
-			if (!generator.visualConfigure(parent)) { return; }
+
+			if (generate) {
+				if (!generator.invisibleConfigure(parent)) { return; }
+			}
+			else {
+				if (!generator.visualConfigure(parent)) { return; }
+			}
+				
 			generator.addListener(progressDialog);
 			// This actually works because it's a modal dialog;
 			// a new nested event loop is generated in the event loop

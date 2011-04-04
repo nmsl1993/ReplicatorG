@@ -112,6 +112,7 @@ import replicatorg.app.Base;
 import replicatorg.app.MRUList;
 import replicatorg.app.MachineController;
 import replicatorg.app.MachineFactory;
+import replicatorg.app.RemoteController;
 import replicatorg.app.Base.InitialOpenBehavior;
 import replicatorg.app.exceptions.SerialException;
 import replicatorg.app.syntax.JEditTextArea;
@@ -172,6 +173,10 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	Image icon;
 
 	MachineController machine;
+	
+	RemoteController controller;
+	int listenerCount = 0;
+
 
 	static public final KeyStroke WINDOW_CLOSE_KEYSTROKE = KeyStroke
 			.getKeyStroke('W', Toolkit.getDefaultToolkit()
@@ -253,7 +258,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 	public Build getBuild() { return build; }
 	
-	private PreviewPanel getPreviewPanel() {
+	public PreviewPanel getPreviewPanel() {
 		if (previewPanel == null) {
 			previewPanel = new PreviewPanel(this);
 			cardPanel.add(previewPanel,MODEL_TAB_KEY);
@@ -522,7 +527,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 	}
 	
-	public void runToolpathGenerator() {
+	public void runToolpathGenerator(boolean generate) {
 		// Check for modified STL
 		if (build.getModel().isModified()) {
 			final String message = "<html>You have made changes to this model.  Any unsaved changes will<br>" +
@@ -537,7 +542,8 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			}
 		}
 		ToolpathGenerator generator = ToolpathGeneratorFactory.createSelectedGenerator();
-		ToolpathGeneratorThread tgt = new ToolpathGeneratorThread(this, generator, build);
+	
+		ToolpathGeneratorThread tgt = new ToolpathGeneratorThread(this, generator, build, generate);
 		tgt.addListener(this);
 		tgt.start();
 	}
@@ -1563,7 +1569,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 	}
 
-	public void handleUpload() {
+	public void handleUpload(String fileName) {
 		if (building)
 			return;
 		if (simulating)
@@ -1573,10 +1579,14 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				!(machine.driver instanceof SDCardCapture)) {
 			Base.logger.severe("Not ready to build yet.");
 		} else {
-			BuildNamingDialog bsd = new BuildNamingDialog(this,build.getName());
-			bsd.setVisible(true);
-			String path = bsd.getPath();
-			if (path != null) {
+			
+			if (fileName == null) {
+				BuildNamingDialog bsd = new BuildNamingDialog(this,build.getName());
+				bsd.setVisible(true);
+				fileName = bsd.getPath();
+			}
+			
+			if (fileName != null) {
 	
 				// build specific stuff
 				building = true;
@@ -1588,7 +1598,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	
 				message("Uploading...");
 				buildStart = new Date();
-				machine.upload(path);
+				machine.upload(fileName);
 			}
 		}
 	}
@@ -1643,7 +1653,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	    }
 	}
 
-	public void handleBuildToFile() {
+	public void handleBuildToFile(String fileName) {
 		if (building)
 			return;
 		if (simulating)
@@ -1652,9 +1662,12 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				!(machine.driver instanceof SDCardCapture)) {
 			Base.logger.severe("Not ready to build yet.");
 		} else {
-			String sourceName = build.getName() + ".s3g";
-			String path = selectOutputFile(sourceName);
-			if (path != null) {
+			if (fileName == null) {
+				String sourceName = build.getName() + ".s3g";
+				fileName = selectOutputFile(sourceName);
+			}
+			
+			if (fileName != null) {
 				// build specific stuff
 				building = true;
 				//buttons.activate(MainButtonPanel.BUILD);
@@ -1664,7 +1677,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				// start our building thread.
 	
 				buildStart = new Date();
-				machine.buildToFile(path);
+				machine.buildToFile(fileName);
 			}
 		}
 	}
@@ -2573,6 +2586,14 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		setMachine(Base.loadMachine(name));
 		if (getMachine() == null) return; // abort on no selected machine
 		reloadSerialMenu();
+		
+		// Add in a socket listener, with full access to the device!
+		// Note: This should happen at load, and stick around, instead of being attached to the machine.
+		this.controller = new RemoteController(machine.driver, 2000);
+		this.controller.setName("Listener #" + this.listenerCount);
+		this.listenerCount += 1;
+		this.controller.start();
+
 		
 		if(previewPanel != null)
 		{
