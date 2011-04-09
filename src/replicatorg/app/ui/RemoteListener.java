@@ -10,6 +10,7 @@ import java.util.EnumSet;
 
 import replicatorg.app.Base;
 import replicatorg.drivers.Driver;
+import replicatorg.drivers.PenPlotter;
 import replicatorg.drivers.RetryException;
 import replicatorg.machine.model.AxisId;
 import replicatorg.util.Point5d;
@@ -19,6 +20,10 @@ public class RemoteListener extends Thread {
 	Driver driver;
 	int port;
 	boolean running;
+  String penMode = "MEGA";
+
+  double penUpAngle = 50;
+  double penDownAngle = 30;
 	
 	ServerSocket serverSocket;
 	Socket clientSocket;
@@ -33,11 +38,19 @@ public class RemoteListener extends Thread {
 	private void runCommand(String command) throws RetryException {
 		if (command.contentEquals("PD")) {
 			Base.logger.info("Pen down!");
-			driver.enableFan();
+      if(penMode.equals("UNICORN")){
+        ((PenPlotter)driver).setServoPos(0, penDownAngle);
+      } else {
+  			driver.enableFan();
+      }
 		}
 		else if (command.contentEquals("PU")) {
 			Base.logger.info("Pen up!");
-			driver.disableFan();
+      if(penMode.equals("UNICORN")){
+        ((PenPlotter)driver).setServoPos(0, penUpAngle);
+      } else {
+        driver.disableFan();
+      }
 		}
 		else if (command.contentEquals("HOME")) {
 			Base.logger.info("Home!");
@@ -64,6 +77,34 @@ public class RemoteListener extends Thread {
 				driver.queuePoint(point);
 			}
 		}
+    else if(command.startsWith("FR")) {
+      String bits[] = command.split(" ");
+
+      if (bits.length == 2) {
+        driver.setFeedrate(Double.parseDouble(bits[1]));
+      }
+    }
+    else if(command.startsWith("PM")) {
+      String bits[] = command.split(" ");
+
+      if (bits.length == 2) {
+        penMode = bits[1];
+      }
+    }
+    else if(command.startsWith("PUA")) {
+      String bits[] = command.split(" ");
+
+      if (bits.length == 2) {
+        penUpAngle = (Double.parseDouble(bits[1]));
+      }
+    }
+    else if(command.startsWith("PDA")) {
+      String bits[] = command.split(" ");
+
+      if (bits.length == 2) {
+        penDownAngle = (Double.parseDouble(bits[1]));
+      }
+    }
 		else if (command.contentEquals("SD")) {
 			Base.logger.info("Steppers disable!");
 			driver.disableDrives();
