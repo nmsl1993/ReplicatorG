@@ -112,6 +112,12 @@ public class RemoteController extends Thread {
 				Base.logger.fine("Attempting to build to file: " + destinationFile);
 				doBuild("file", destinationFile);
 			}
+			else if (command.contentEquals("updateViewport")) {
+				Double zoom = rootNode.path("zoom").getDoubleValue();
+				
+				Base.logger.fine("Updating viewport: " + zoom);
+				Base.getEditor().getPreviewPanel().updateZoom(zoom);
+			}
 			else {
 				Base.logger.severe("Didn't understand command: " + command);
 			}

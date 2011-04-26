@@ -182,6 +182,11 @@ public class PreviewPanel extends JPanel {
 		updateVP();
 	}
 	
+	public void updateZoom(double deltaZoom) {
+		cameraTranslation.z = deltaZoom;
+		updateVP();
+	}
+	
 	public PreviewPanel(final MainWindow mainWindow) {
 		this.mainWindow = mainWindow;
 		//setLayout(new MigLayout()); 
