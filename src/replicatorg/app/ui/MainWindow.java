@@ -43,8 +43,6 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -119,6 +117,9 @@ import replicatorg.app.syntax.PdeTextAreaDefaults;
 import replicatorg.app.syntax.SyntaxDocument;
 import replicatorg.app.syntax.TextAreaPainter;
 import replicatorg.app.ui.controlpanel.ControlPanelWindow;
+import replicatorg.app.ui.menus.BuildMenu;
+import replicatorg.app.ui.menus.EasyJMenuItem;
+import replicatorg.app.ui.menus.MachineMenu;
 import replicatorg.app.ui.modeling.PreviewPanel;
 import replicatorg.app.util.PythonUtils;
 import replicatorg.app.util.SwingPythonSelector;
@@ -143,7 +144,6 @@ import replicatorg.model.JEditTextAreaSource;
 import replicatorg.plugin.toolpath.ToolpathGenerator;
 import replicatorg.plugin.toolpath.ToolpathGeneratorFactory;
 import replicatorg.plugin.toolpath.ToolpathGeneratorThread;
-import replicatorg.plugin.toolpath.ToolpathGeneratorFactory.ToolpathGeneratorDescriptor;
 import replicatorg.uploader.FirmwareUploader;
 
 import com.apple.mrj.MRJAboutHandler;
@@ -220,13 +220,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 	JMenuItem saveMenuItem;
 	JMenuItem saveAsMenuItem;
-	JMenuItem stopItem;
-	JMenuItem pauseItem;
-	JMenuItem controlPanelItem;
-	JMenuItem buildMenuItem;
-
-	JMenu machineMenu;
-	MachineMenuListener machineMenuListener;
 
 	public boolean building;
 	public boolean simulating;
@@ -294,8 +287,9 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		JMenuBar menubar = new JMenuBar();
 		menubar.add(buildFileMenu());
 		menubar.add(buildEditMenu());
-		menubar.add(buildGCodeMenu());
-		menubar.add(buildMachineMenu());
+		
+		menubar.add(new BuildMenu(this));
+		menubar.add(new MachineMenu(this));
 
 		setJMenuBar(menubar);
 		
@@ -557,91 +551,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 	private JMenu serialMenu = null;
 	
-	private void reloadSerialMenu() {
-		if (serialMenu == null) return;
-		serialMenu.removeAll();
-		if (machine == null) {
-			JMenuItem item = new JMenuItem("No machine selected.");
-			item.setEnabled(false);
-			serialMenu.add(item);
-			return;
-		} else if (!(machine.driver instanceof UsesSerial))  {
-			JMenuItem item = new JMenuItem("Currently selected machine does not use a serial port.");
-			item.setEnabled(false);
-			serialMenu.add(item);
-			return;
-		}
-		
-		String currentName = null;
-		UsesSerial us = (UsesSerial)machine.driver;
-		if (us.getSerial() != null) {
-			currentName = us.getSerial().getName();
-		}
-		else {
-			currentName = Base.preferences.get("serial.last_selected", null);
-		}
-		Vector<Name> names = Serial.scanSerialNames();
-		Collections.sort(names);
-		
-		// Filter /dev/cu. devices on OS X, since they work the same as .tty for our purposes.
-		if (Base.isMacOS()) {
-			Vector<Name> filteredNames = new Vector<Name>();
-			
-			for (Name name : names) {
-				if(!(name.getName().startsWith("/dev/cu")
-					|| name.getName().equals("/dev/tty.Bluetooth-Modem")
-					|| name.getName().equals("/dev/tty.Bluetooth-PDA-Sync"))) {
-					filteredNames.add(name);
-				}
-			}
-			
-			names = filteredNames;
-		}
 
-		
-		ButtonGroup radiogroup = new ButtonGroup();
-		for (Name name : names) {
-			JRadioButtonMenuItem item = new JRadioButtonMenuItem(name.toString());
-			item.setEnabled(name.isAvailable());
-			item.setSelected(name.getName().equals(currentName));
-			final String portName = name.getName();
-			item.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Thread t = new Thread() {
-						public void run() {
-							try {
-								UsesSerial us = (UsesSerial)machine.driver;
-								if (us != null) synchronized(us) {
-										us.setSerial(new Serial(portName, us));
-										Base.preferences.put("serial.last_selected", portName);
-										machine.reset();
-								}
-							} catch (SerialException se) {
-								se.printStackTrace();
-							}
-
-						}
-					};
-					t.start();
-				}
-			});
-			radiogroup.add(item);
-			serialMenu.add(item);
-		}
-		if (names.isEmpty()) {
-			JMenuItem item = new JMenuItem("No serial ports detected");
-			item.setEnabled(false);
-			serialMenu.add(item);			
-		}
-		serialMenu.addSeparator();
-		JMenuItem item = new JMenuItem("Rescan serial ports");
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				reloadSerialMenu();
-			}
-		});
-		serialMenu.add(item);
-	}
 	
 	private JMenu mruMenu = null;
 
@@ -682,7 +592,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		JMenuItem item;
 		JMenu menu = new JMenu("File");
 
-		item = newJMenuItem("New", 'N');
+		item = new EasyJMenuItem("New", 'N');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				handleNew(false);
@@ -690,7 +600,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		});
 		menu.add(item);
 
-		item = newJMenuItem("Open...", 'O', false);
+		item = new EasyJMenuItem("Open...", 'O', false);
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				handleOpen(null);
@@ -698,7 +608,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		});
 		menu.add(item);
 
-		saveMenuItem = newJMenuItem("Save", 'S');
+		saveMenuItem = new EasyJMenuItem("Save", 'S');
 		saveMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				handleSave(false);
@@ -706,7 +616,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		});
 		menu.add(saveMenuItem);
 
-		saveAsMenuItem = newJMenuItem("Save As...", 'S', true);
+		saveAsMenuItem = new EasyJMenuItem("Save As...", 'S', true);
 		saveAsMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				handleSaveAs();
@@ -728,7 +638,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		if (!Base.isMacOS()) {
 			menu.addSeparator();
 			
-			item = newJMenuItem("Preferences", ',');
+			item = new EasyJMenuItem("Preferences", ',');
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					handlePrefs();
@@ -737,7 +647,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			menu.add(item);
 
 			menu.addSeparator();
-			item = newJMenuItem("Quit", 'Q');
+			item = new EasyJMenuItem("Quit", 'Q');
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					handleQuitInternal();
@@ -821,163 +731,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 	}
 
-	protected JMenu buildGCodeMenu() {
-		JMenuItem item;
-		JMenu menu = new JMenu("GCode");
-
-		item = newJMenuItem("Estimate", 'E');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handleEstimate();
-			}
-		});
-		menu.add(item);
-
-		item = newJMenuItem("Simulate", 'L');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handleSimulate();
-			}
-		});
-		menu.add(item);
-
-		buildMenuItem = newJMenuItem("Build", 'B');
-		buildMenuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handleBuild();
-			}
-		});
-		menu.add(buildMenuItem);
-
-		pauseItem = newJMenuItem("Pause", 'E');
-		pauseItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handlePause();
-			}
-		});
-		pauseItem.setEnabled(false);
-		menu.add(pauseItem);
-
-		stopItem = newJMenuItem("Stop", '.');
-		stopItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handleStop();
-			}
-		});
-		stopItem.setEnabled(false);
-		menu.add(stopItem);
-
-		// GENERATOR
-		JMenu genMenu = new JMenu("Choose GCode generator");
-		Vector<ToolpathGeneratorDescriptor> generators = ToolpathGeneratorFactory.getGeneratorList();
-		String name = ToolpathGeneratorFactory.getSelectedName();
-		ButtonGroup group = new ButtonGroup();
-		for (ToolpathGeneratorDescriptor tgd : generators) {
-			JRadioButtonMenuItem i = new JRadioButtonMenuItem(tgd.name);
-			group.add(i);
-			final String n = tgd.name;
-			i.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					ToolpathGeneratorFactory.setSelectedName(n);
-				}
-			});
-			if (name.equals(tgd.name)) { i.setSelected(true); }
-			genMenu.add(i);
-		}
-		menu.add(genMenu);
-		
-		return menu;
-	}
-
-	JMenuItem onboardParamsItem = new JMenuItem("Motherboard Onboard Preferences...");
-	JMenuItem extruderParamsItem = new JMenuItem("Toolhead Onboard Preferences...");
-	JMenuItem toolheadIndexingItem = new JMenuItem("Set Toolhead Index...");
-	JMenuItem realtimeControlItem = new JMenuItem("Open real time controls window...");
-	
-	protected JMenu buildMachineMenu() {
-		JMenuItem item;
-		JMenu menu = new JMenu("Machine");
-
-		machineMenu = new JMenu("Driver");
-		populateMachineMenu();
-		menu.add(machineMenu);
-
-		menu.addMenuListener(new MenuListener() {
-			public void menuCanceled(MenuEvent e) {
-			}
-
-			public void menuDeselected(MenuEvent e) {
-			}
-
-			public void menuSelected(MenuEvent e) {
-				populateMachineMenu();
-			}
-		});
-
-		machineMenuListener = new MachineMenuListener();
-
-		serialMenu = new JMenu("Serial Port");
-		reloadSerialMenu();
-		menu.add(serialMenu);
-		
-		controlPanelItem = new JMenuItem("Control Panel", 'C');
-		controlPanelItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_J,ActionEvent.CTRL_MASK));
-		controlPanelItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handleControlPanel();
-			}
-		});
-		menu.add(controlPanelItem);
-		
-		onboardParamsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				handleOnboardPrefs();
-			}
-		});
-		onboardParamsItem.setVisible(false);
-		menu.add(onboardParamsItem);
-
-		extruderParamsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				handleExtruderPrefs();
-			}
-		});
-		extruderParamsItem.setVisible(false);
-		menu.add(extruderParamsItem);
-
-		toolheadIndexingItem.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				handleToolheadIndexing();
-			}
-		});
-		
-		toolheadIndexingItem.setVisible(false);
-		menu.add(toolheadIndexingItem);
-		
-		realtimeControlItem.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				handleRealTimeControl();
-			}
-		});
-		if (machine != null && 
-				(machine.driver instanceof RealtimeControl))
-		{
-			realtimeControlItem.setVisible(false);
-			menu.add(realtimeControlItem);
-		}
-		
-		item = new JMenuItem("Upload new firmware...");
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				FirmwareUploader.startUploader(MainWindow.this);
-			}
-		});
-		menu.add(item);
-		
-		return menu;
-	}
-
-	protected void handleToolheadIndexing() {
+	public void handleToolheadIndexing() {
 		if (machine == null || 
 				!(machine.driver instanceof MultiTool)) {
 			JOptionPane.showMessageDialog(
@@ -997,7 +751,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		Base.logger.info("Supports RC");
 		return true;
 	}
-	protected void handleRealTimeControl() {
+	public void handleRealTimeControl() {
 		if(!this.supportsRealTimeControl()) {
 			JOptionPane.showMessageDialog(
 					this,
@@ -1012,68 +766,16 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			}
 		}
 	}
-	class MachineMenuListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			if (machineMenu == null) {
-				System.out.println("machineMenu is null");
-				return;
-			}
-
-			int count = machineMenu.getItemCount();
-			for (int i = 0; i < count; i++) {
-				((JCheckBoxMenuItem) machineMenu.getItem(i)).setState(false);
-			}
-
-			JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
-			item.setState(true);
-			final String name = item.getText();
-			Base.preferences.put("machine.name", name);
-
-			// load it and set it.
-			Thread t = new Thread() {
-				public void run() {
-					loadMachine(name, (machine != null) && machine.getMachineState().isConnected());
-				}
-			};
-			t.start();
-		}
-	}
-
-	protected void populateMachineMenu() {
-		machineMenu.removeAll();
-		boolean empty = true;
-
-		try {
-			for (String name : MachineFactory.getMachineNames() ) {
-				JMenuItem rbMenuItem = new JCheckBoxMenuItem(name,
-						name.equals(Base.preferences
-								.get("machine.name",null)));
-				rbMenuItem.addActionListener(machineMenuListener);
-				machineMenu.add(rbMenuItem);
-				empty = false;
-			}
-			if (!empty) {
-				// System.out.println("enabling the machineMenu");
-				machineMenu.setEnabled(true);
-			}
-		} catch (Exception exception) {
-			System.out.println("error retrieving machine list");
-			exception.printStackTrace();
-		}
-
-		if (machineMenu.getItemCount() == 0)
-			machineMenu.setEnabled(false);
-	}
 
 	public JMenu buildEditMenu() {
 		JMenu menu = new JMenu("Edit");
 		JMenuItem item;
 
-		undoItem = newJMenuItem("Undo", 'Z');
+		undoItem = new EasyJMenuItem("Undo", 'Z');
 		undoItem.addActionListener(undoAction = new UndoAction());
 		menu.add(undoItem);
 
-		redoItem = newJMenuItem("Redo", 'Y');
+		redoItem = new EasyJMenuItem("Redo", 'Y');
 		redoItem.addActionListener(redoAction = new RedoAction());
 		menu.add(redoItem);
 
@@ -1081,7 +783,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 		// TODO "cut" and "copy" should really only be enabled
 		// if some text is currently selected
-		item = newJMenuItem("Cut", 'X');
+		item = new EasyJMenuItem("Cut", 'X');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textarea.cut();
@@ -1090,7 +792,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		});
 		menu.add(item);
 
-		item = newJMenuItem("Copy", 'C');
+		item = new EasyJMenuItem("Copy", 'C');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textarea.copy();
@@ -1098,7 +800,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		});
 		menu.add(item);
 
-		item = newJMenuItem("Paste", 'V');
+		item = new EasyJMenuItem("Paste", 'V');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textarea.paste();
@@ -1107,7 +809,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		});
 		menu.add(item);
 
-		item = newJMenuItem("Select All", 'A');
+		item = new EasyJMenuItem("Select All", 'A');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textarea.selectAll();
@@ -1117,7 +819,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 		menu.addSeparator();
 
-		item = newJMenuItem("Find...", 'F');
+		item = new EasyJMenuItem("Find...", 'F');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (find == null) {
@@ -1132,7 +834,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 		// TODO find next should only be enabled after a
 		// search has actually taken place
-		item = newJMenuItem("Find Next", 'G');
+		item = new EasyJMenuItem("Find Next", 'G');
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (find != null) {
@@ -1146,28 +848,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		menu.add(item);
 
 		return menu;
-	}
-
-	/**
-	 * Convenience method, see below.
-	 */
-	static public JMenuItem newJMenuItem(String title, int what) {
-		return newJMenuItem(title, what, false);
-	}
-
-	/**
-	 * A software engineer, somewhere, needs to have his abstraction taken away.
-	 * In some countries they jail or beat people for writing the sort of API
-	 * that would require a five line helper function just to set the command
-	 * key for a menu item.
-	 */
-	static public JMenuItem newJMenuItem(String title, int what, boolean shift) {
-		JMenuItem menuItem = new JMenuItem(title);
-		int modifiers = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-		if (shift)
-			modifiers |= ActionEvent.SHIFT_MASK;
-		menuItem.setAccelerator(KeyStroke.getKeyStroke(what, modifiers));
-		return menuItem;
 	}
 
 	// ...................................................................
@@ -1670,7 +1350,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		if (Base.logger.isLoggable(Level.FINE)) {
 			Base.logger.finest("Machine state changed to " + evt.getState().getState());
 		}
-		boolean hasGcode = getBuild().getCode() != null;
 		if (building) {
 			if (evt.getState().isReady() ||
 				evt.getState().getState() == MachineState.State.STOPPING) {
@@ -1692,7 +1371,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 			}
 		}
 		if (evt.getState().isReady()) {
-			reloadSerialMenu();
+			// TODO: We used to reload the serial menu here, do we actually need to?
 		}
 		boolean showParams = 
 				evt.getState().isReady() &&
@@ -1720,27 +1399,7 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 				}
 			}
 		}
-		
-		// enable the control panel menu item when the machine is ready
-		controlPanelItem.setEnabled(evt.getState().isReady());
-		// enable the build menu item when the machine is ready and there is gcode in the editor
-		buildMenuItem.setEnabled(hasGcode && evt.getState().isReady());
-		onboardParamsItem.setVisible(showParams);
-		extruderParamsItem.setVisible(showParams);
-		boolean showIndexing = 
-			evt.getState().isReady() &&
-			machine != null &&
-			machine.getDriver() instanceof MultiTool &&
-			((MultiTool)machine.getDriver()).toolsCanBeReindexed();
-		toolheadIndexingItem.setVisible(showIndexing);
-		
-		boolean showRealtimeTuning = 
-			evt.getState().isReady() &&
-			machine != null &&
-			machine.getDriver() instanceof RealtimeControl &&
-			((RealtimeControl)machine.getDriver()).hasFeatureRealtimeControl();
-		realtimeControlItem.setVisible(showRealtimeTuning);
-		realtimeControlItem.setEnabled(showRealtimeTuning);
+
 		// Advertise machine name
 		String name = "Not Connected";
 		if (evt.getState().isConnected() && machine != null) {
@@ -1754,9 +1413,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	}
 
 	public void setEditorBusy(boolean isBusy) {
-		// variables and stuff.
-		stopItem.setEnabled(isBusy);
-		pauseItem.setEnabled(isBusy);
 
 		// clear the console on each build, unless the user doesn't want to
 		if (isBusy && Base.preferences.getBoolean("console.auto_clear",true)) {
@@ -2548,7 +2204,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	public void loadMachine(String name, Boolean connect) {
 		setMachine(Base.loadMachine(name));
 		if (getMachine() == null) return; // abort on no selected machine
-		reloadSerialMenu();
 		
 		if(previewPanel != null)
 		{
