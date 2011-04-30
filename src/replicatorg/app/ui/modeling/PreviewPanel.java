@@ -165,7 +165,7 @@ public class PreviewPanel extends JPanel {
 		
 	Canvas3D canvas;
 	
-	void adjustViewAngle(double deltaYaw, double deltaPitch) {
+	public void adjustViewAngle(double deltaYaw, double deltaPitch) {
 		turntableAngle += deltaYaw;
 		elevationAngle += deltaPitch;
 		updateVP();

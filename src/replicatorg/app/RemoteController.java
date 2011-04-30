@@ -114,9 +114,11 @@ public class RemoteController extends Thread {
 			}
 			else if (command.contentEquals("updateViewport")) {
 				Double zoom = rootNode.path("zoom").getDoubleValue();
+				Double zrotate = rootNode.path("zrotate").getDoubleValue();
 				
-				Base.logger.fine("Updating viewport: " + zoom);
+				Base.logger.fine("Updating viewport: " + zoom + " " + zrotate);
 				Base.getEditor().getPreviewPanel().updateZoom(zoom);
+				Base.getEditor().getPreviewPanel().adjustViewAngle(zrotate,0);
 			}
 			else {
 				Base.logger.severe("Didn't understand command: " + command);
