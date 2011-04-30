@@ -141,9 +141,16 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 	JLabel statusLabel;
 
 	final static Color BACK_COLOR = new Color(0x5F, 0x73, 0x25); 
-	MainButton simButton, pauseButton, stopButton;
-	MainButton buildButton, resetButton, cpButton, rcButton;
-	MainButton disconnectButton, connectButton;
+	MainButton generateButton;
+	MainButton simButton;
+	MainButton pauseButton;
+	MainButton stopButton;
+	MainButton buildButton;
+	MainButton resetButton;
+	MainButton cpButton;
+	MainButton rcButton;
+	MainButton disconnectButton;
+	MainButton connectButton;
 	
 	MainButton uploadButton, playbackButton, fileButton;
 	
@@ -159,9 +166,10 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		Font statusFont = Base.getFontPref("buttons.status.font","SansSerif,plain,12");
 		Color statusColor = Base.getColorPref("buttons.status.color","#FFFFFF");
 
-
+		generateButton = makeButton("Generate", "images/button-simulate.png");
+		add(generateButton);
 		simButton = makeButton("Simulate", "images/button-simulate.png");
-		add(simButton);
+		add(simButton,"gap unrelated");
 		buildButton = makeButton("Build", "images/button-build.png");
 		add(buildButton);
 		uploadButton = makeButton("Upload to SD card", "images/button-upload.png");
@@ -232,7 +240,9 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 
 
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == simButton) {
+		if (e.getSource() == generateButton) {
+			editor.runToolpathGenerator();
+		} else if (e.getSource() == simButton) {
 			editor.handleSimulate();
 		} else if (e.getSource() == buildButton) {
 			editor.handleBuild();
@@ -291,6 +301,9 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		rcButton.setEnabled(building);
 
 		MachineState.Target runningTarget = s.isBuilding()?s.getTarget():null;
+		
+		// TODO: Handle generate button! Needs events from main window!
+		generateButton.setEnabled(true);
 		
 		simButton.setSelected(runningTarget == MachineState.Target.SIMULATOR);
 		buildButton.setSelected(runningTarget == MachineState.Target.MACHINE);

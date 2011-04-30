@@ -112,7 +112,7 @@ public class BuildMenu extends JMenu implements MachineListener {
 	}
 
 	@Override
-	public void machineProgress(MachineProgressEvent event) {	
+	public void machineProgress(MachineProgressEvent event) {
 	}
 
 
