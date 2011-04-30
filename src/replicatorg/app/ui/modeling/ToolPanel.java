@@ -81,7 +81,7 @@ public class ToolPanel extends JPanel implements KeyListener {
 
 		JPanel toolButtons = new JPanel(new MigLayout("gap 0 0,ins 0,novisualpadding,wrap 1","0[100%]0"));
 		
-		add(toolButtons,"south");
+		add(toolButtons,"north");
 	
 		int column = 0;
 		final int COL_COUNT = 2;
@@ -96,15 +96,6 @@ public class ToolPanel extends JPanel implements KeyListener {
 			}
 			
 		}
-		
-
-		JButton sliceButton = createToolButton("Generate GCode","images/model-to-gcode.png");
-		sliceButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				preview.mainWindow.runToolpathGenerator();
-			}
-		});
-		toolButtons.add(sliceButton,"growx,spanx,wrap");
 
 		titleLabel = new JLabel("Selected Tool");
 		add(titleLabel,"growx,gap 5,spanx,north");
