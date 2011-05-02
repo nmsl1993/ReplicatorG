@@ -146,7 +146,6 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 	MainButton pauseButton;
 	MainButton stopButton;
 	MainButton buildButton;
-	MainButton resetButton;
 	MainButton cpButton;
 	MainButton rcButton;
 	MainButton disconnectButton;
@@ -190,8 +189,6 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		add(cpButton,"gap unrelated");
 		add(rcButton);
 		
-		resetButton = makeButton("Reset machine", "images/button-reset.png");
-		add(resetButton,"gap unrelated");
 		connectButton = makeButton("Connect", "images/button-connect.png");
 		add(connectButton,"gap unrelated");
 		disconnectButton = makeButton("Disconnect", "images/button-disconnect.png");
@@ -208,7 +205,6 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		stopButton.setToolTipText("This will abort the build in progress.");
 		cpButton.setToolTipText("Here you'll find manually controls for the machine.");
 		rcButton.setToolTipText("This can be used to tune the process, in real time, during a print job.");
-		resetButton.setToolTipText("This will restart the firmware on the machine.");
 		connectButton.setToolTipText("Connect to the machine.");
 		disconnectButton.setToolTipText("Disconnect from the machine.");
 
@@ -256,8 +252,6 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 			editor.handlePause();
 		} else if (e.getSource() == stopButton) {
 			editor.handleStop();
-		} else if (e.getSource() == resetButton) {
-			editor.handleReset();
 		} else if (e.getSource() == cpButton) {
 			editor.handleControlPanel();
 		} else if (e.getSource() == connectButton) {
@@ -278,10 +272,10 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		});
 	}
 	
-	private void updateFromState(final MachineState s, final MachineController machine) {
-		boolean ready = s.isReady();
-		boolean building = s.isBuilding();
-		boolean paused = s.isPaused();
+	private void updateFromState(final MachineState state, final MachineController machine) {
+		boolean ready = state.isReady();
+		boolean building = state.isBuilding();
+		boolean paused = state.isPaused();
 		boolean hasGcode = (editor != null) && (editor.getBuild() != null) &&
 			editor.getBuild().getCode() != null;
 		boolean hasMachine = machine != null;
@@ -300,7 +294,7 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		pauseButton.setSelected(paused);
 		rcButton.setEnabled(building);
 
-		MachineState.Target runningTarget = s.isBuilding()?s.getTarget():null;
+		MachineState.Target runningTarget = state.isBuilding()?state.getTarget():null;
 		
 		// TODO: Handle generate button! Needs events from main window!
 		generateButton.setEnabled(true);
@@ -311,8 +305,7 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		fileButton.setSelected(runningTarget == MachineState.Target.FILE);
 		playbackButton.setSelected(runningTarget == MachineState.Target.NONE);
 
-		boolean connected = s.isConnected() && hasMachine && machine.isInitialized();
-		resetButton.setEnabled(connected); 
+		boolean connected = state.isConnected() && hasMachine && machine.isInitialized();
 		disconnectButton.setEnabled(connected);
 		connectButton.setEnabled(hasMachine && !connected);
 		cpButton.setEnabled(ready);

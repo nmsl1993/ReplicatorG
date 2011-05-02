@@ -65,7 +65,27 @@ public class MachineMenu extends JMenu implements MachineListener {
 		});
 		add(controlPanel);
 		
-		onboardParams = new JMenuItem("Motherboard Onboard Preferences...");
+		realtimeControl = new JMenuItem("Real Time Controls");
+		realtimeControl.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				editor.handleRealTimeControl();
+			}
+		});
+		add(realtimeControl);
+
+		addSeparator();
+		
+		realtimeControl = new JMenuItem("Reset Machine");
+		realtimeControl.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				editor.handleReset();
+			}
+		});
+		add(realtimeControl);
+		
+		addSeparator();
+		
+		onboardParams = new JMenuItem("Motherboard Preferences");
 		onboardParams.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				editor.handleOnboardPrefs();
@@ -73,7 +93,7 @@ public class MachineMenu extends JMenu implements MachineListener {
 		});
 		add(onboardParams);
 	
-		extruderParams = new JMenuItem("Toolhead Onboard Preferences...");
+		extruderParams = new JMenuItem("Toolhead Preferences");
 		extruderParams.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				editor.handleExtruderPrefs();
@@ -81,21 +101,13 @@ public class MachineMenu extends JMenu implements MachineListener {
 		});
 		add(extruderParams);
 	
-		toolheadIndexing = new JMenuItem("Set Toolhead Index...");
+		toolheadIndexing = new JMenuItem("Set Toolhead Index");
 		toolheadIndexing.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				editor.handleToolheadIndexing();
 			}
 		});
 		add(toolheadIndexing);
-		
-		realtimeControl = new JMenuItem("Open real time controls window...");
-		realtimeControl.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				editor.handleRealTimeControl();
-			}
-		});
-		add(realtimeControl);
 		
 		uploadFirmware = new JMenuItem("Upload new firmware...");
 		uploadFirmware.addActionListener(new ActionListener() {
