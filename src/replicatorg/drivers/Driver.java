@@ -148,7 +148,13 @@ public interface Driver {
 	 */
 	public void setCurrentPosition(Point5d p) throws RetryException;
 
-	public Point5d getCurrentPosition();
+	/**
+	 * Get the current machine position
+	 * @param update True if the driver should be forced to query the machine
+	 * for its position, instead of using the cached value.
+	 * @return
+	 */
+	public Point5d getCurrentPosition(boolean update);
 
 	/**
 	 * Indicate that the currently maintained position may no longer be the machine's position,
@@ -241,7 +247,17 @@ public interface Driver {
 
 	public int getMotorSpeedPWM();
 
+	/**
+	 * Enable motor until stopped by disableMotor
+	 * @throws RetryException 
+	 */
 	public void enableMotor() throws RetryException;
+
+	/**
+	 * Enable motor for a fixed duration, then disable
+	 * @throws RetryException 
+	 */
+	public void enableMotor(long millis) throws RetryException;
 
 	public void disableMotor() throws RetryException;
 
@@ -349,6 +365,10 @@ public interface Driver {
 	 */
 	public void stop(boolean abort);
 
+	public boolean hasSoftStop();
+
+	public boolean hasEmergencyStop();
+	
 	public void reset();
 
 	/***************************************************************************

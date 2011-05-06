@@ -78,7 +78,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -93,7 +92,6 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
@@ -107,6 +105,7 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 
+import net.iharder.dnd.FileDrop;
 import net.miginfocom.swing.MigLayout;
 import replicatorg.app.Base;
 import replicatorg.app.MRUList;
@@ -119,6 +118,7 @@ import replicatorg.app.syntax.PdeKeywords;
 import replicatorg.app.syntax.PdeTextAreaDefaults;
 import replicatorg.app.syntax.SyntaxDocument;
 import replicatorg.app.syntax.TextAreaPainter;
+import replicatorg.app.ui.controlpanel.ControlPanelWindow;
 import replicatorg.app.ui.modeling.PreviewPanel;
 import replicatorg.app.util.PythonUtils;
 import replicatorg.app.util.SwingPythonSelector;
@@ -299,7 +299,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		menubar.add(buildEditMenu());
 		menubar.add(buildGCodeMenu());
 		menubar.add(buildMachineMenu());
-		menubar.add(buildHelpMenu());
 
 		setJMenuBar(menubar);
 		
@@ -326,6 +325,19 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 
 		splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, cardPanel,
 				console);
+		
+        new FileDrop( null, cardPanel, /*dragBorder,*/ new FileDrop.Listener()
+        {   public void filesDropped( java.io.File[] files )
+            {   
+        		// for( java.io.File file : files )
+        		// We can really only handle opening one file, so just try the first one.
+        		try {
+					Base.logger.fine( files[0].getCanonicalPath() + "\n" );
+					handleOpen(files[0].getCanonicalPath());
+				} catch (IOException e) {
+				}
+            }   // end filesDropped
+        }); // end FileDrop.Listener
 
 		//splitPane.setOneTouchExpandable(true);
 		// repaint child panes while resizing: a little heavyweight
@@ -349,61 +361,61 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		pane.add(splitPane,"growx,growy,shrinkx,shrinky");
 		pack();
 		
-		textarea.setTransferHandler(new TransferHandler() {
-			private static final long serialVersionUID = 2093323078348794384L;
-
-			public boolean canImport(JComponent dest, DataFlavor[] flavors) {
-				// claim that we can import everything
-				return true;
-			}
-
-			public boolean importData(JComponent src, Transferable transferable) {
-				DataFlavor[] flavors = transferable.getTransferDataFlavors();
-
-				int successful = 0;
-
-				for (int i = 0; i < flavors.length; i++) {
-					try {
-						// System.out.println(flavors[i]);
-						// System.out.println(transferable.getTransferData(flavors[i]));
-						Object stuff = transferable.getTransferData(flavors[i]);
-						if (!(stuff instanceof java.util.List<?>))
-							continue;
-						java.util.List<?> list = (java.util.List<?>) stuff;
-
-						for (int j = 0; j < list.size(); j++) {
-							Object item = list.get(j);
-							if (item instanceof File) {
-								File file = (File) item;
-
-								// see if this is a .gcode file to be opened
-								String filename = file.getName();
-								// FIXME: where did this come from?  Need case insensitivity.
-								if (filename.endsWith(".gcode") || filename.endsWith(".ngc")) {
-									handleOpenFile(file);
-									return true;
-								}
-							}
-						}
-
-					} catch (Exception e) {
-						e.printStackTrace();
-						return false;
-					}
-				}
-
-				if (successful == 0) {
-					error("No files were added to the sketch.");
-
-				} else if (successful == 1) {
-					message("One file added to the sketch.");
-
-				} else {
-					message(successful + " files added to the sketch.");
-				}
-				return true;
-			}
-		});
+//		textarea.setTransferHandler(new TransferHandler() {
+//			private static final long serialVersionUID = 2093323078348794384L;
+//
+//			public boolean canImport(JComponent dest, DataFlavor[] flavors) {
+//				// claim that we can import everything
+//				return true;
+//			}
+//
+//			public boolean importData(JComponent src, Transferable transferable) {
+//				DataFlavor[] flavors = transferable.getTransferDataFlavors();
+//
+//				int successful = 0;
+//
+//				for (int i = 0; i < flavors.length; i++) {
+//					try {
+//						// System.out.println(flavors[i]);
+//						// System.out.println(transferable.getTransferData(flavors[i]));
+//						Object stuff = transferable.getTransferData(flavors[i]);
+//						if (!(stuff instanceof java.util.List<?>))
+//							continue;
+//						java.util.List<?> list = (java.util.List<?>) stuff;
+//
+//						for (int j = 0; j < list.size(); j++) {
+//							Object item = list.get(j);
+//							if (item instanceof File) {
+//								File file = (File) item;
+//
+//								// see if this is a .gcode file to be opened
+//								String filename = file.getName();
+//								// FIXME: where did this come from?  Need case insensitivity.
+//								if (filename.endsWith(".gcode") || filename.endsWith(".ngc")) {
+//									handleOpenFile(file);
+//									return true;
+//								}
+//							}
+//						}
+//
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//						return false;
+//					}
+//				}
+//
+//				if (successful == 0) {
+//					error("No files were added to the sketch.");
+//
+//				} else if (successful == 1) {
+//					message("One file added to the sketch.");
+//
+//				} else {
+//					message(successful + " files added to the sketch.");
+//				}
+//				return true;
+//			}
+//		});
 	}
 
 	// ...................................................................
@@ -573,6 +585,23 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		}
 		Vector<Name> names = Serial.scanSerialNames();
 		Collections.sort(names);
+		
+		// Filter /dev/cu. devices on OS X, since they work the same as .tty for our purposes.
+		if (Base.isMacOS()) {
+			Vector<Name> filteredNames = new Vector<Name>();
+			
+			for (Name name : names) {
+				if(!(name.getName().startsWith("/dev/cu")
+					|| name.getName().equals("/dev/tty.Bluetooth-Modem")
+					|| name.getName().equals("/dev/tty.Bluetooth-PDA-Sync"))) {
+					filteredNames.add(name);
+				}
+			}
+			
+			names = filteredNames;
+		}
+
+		
 		ButtonGroup radiogroup = new ButtonGroup();
 		for (Name name : names) {
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem(name.toString());
@@ -1038,74 +1067,6 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		if (machineMenu.getItemCount() == 0)
 			machineMenu.setEnabled(false);
 	}
-
-	protected JMenu buildHelpMenu() {
-		JMenu menu = new JMenu("Help");
-		JMenuItem item;
-
-		if (!Base.isLinux()) {
-			item = newJMenuItem("Getting Started", '1');
-			item.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Base.openURL("http://www.replicat.org/getting-started");
-				}
-			});
-			menu.add(item);
-		}
-
-		item = newJMenuItem("Hardware Setup", '2');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Base.openURL("http://www.replicat.org/hardware");
-			}
-		});
-		menu.add(item);
-
-		item = newJMenuItem("Troubleshooting", '3');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Base.openURL("http://www.replicat.org/troubleshooting");
-			}
-		});
-		menu.add(item);
-
-		item = newJMenuItem("Reference", '4');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Base.openURL("http://www.replicat.org/reference");
-			}
-		});
-		menu.add(item);
-
-		item = newJMenuItem("Frequently Asked Questions", '5');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Base.openURL("http://www.replicat.org/faq");
-			}
-		});
-		menu.add(item);
-
-		item = newJMenuItem("Visit Replicat.orG", '6');
-		item.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Base.openURL("http://www.replicat.org/");
-			}
-		});
-		menu.add(item);
-
-		// macosx already has its own about menu
-		menu.addSeparator();
-		JMenuItem aboutitem = new JMenuItem("About ReplicatorG");
-		aboutitem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				handleAbout();
-			}
-		});
-		menu.add(aboutitem);
-
-		return menu;
-	}
-
 
 	public JMenu buildEditMenu() {
 		JMenu menu = new JMenu("Edit");
@@ -1634,8 +1595,17 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 	private String selectOutputFile(String defaultName) {
 		File directory = null;
 		String loadDir = Base.preferences.get("ui.open_output_dir", null);
-		if (loadDir != null) { directory = new File(loadDir); }
-		JFileChooser fc = new JFileChooser(directory);
+		if (loadDir != null) {
+			directory = new File(loadDir);
+		}
+		JFileChooser fc;
+		if (directory != null) {
+			fc = new JFileChooser(directory);
+		}
+		else {
+			fc = new JFileChooser();
+		}
+		
 		fc.setFileFilter(new ExtensionFilter(".s3g","Makerbot build file"));
 		fc.setDialogTitle("Save Makerbot build as...");
 		fc.setDialogType(JFileChooser.SAVE_DIALOG);
@@ -2222,6 +2192,22 @@ public class MainWindow extends JFrame implements MRJAboutHandler, MRJQuitHandle
 		if (path != null && !new File(path).exists()) {
 			JOptionPane.showMessageDialog(this, "The file "+path+" could not be found.", "File not found", JOptionPane.ERROR_MESSAGE);
 			return;
+		}
+		if (path != null) {
+			boolean extensionValid = false;
+			
+			// Note: Duplication of extension list from selectFile()
+			String[] extensions = {".gcode",".ngc",".stl",".obj",".dae"};
+			String lowercasePath = path.toLowerCase();
+			for (String  extension : extensions) {
+				if (lowercasePath.endsWith(extension)) {
+					extensionValid = true;
+				}
+			}
+			
+			if (!extensionValid) {
+				return;
+			}
 		}
 		try {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

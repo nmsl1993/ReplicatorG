@@ -148,7 +148,7 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 	MainButton uploadButton, playbackButton, fileButton;
 	
 	public MainButtonPanel(MainWindow editor) {
-		setLayout(new MigLayout("gap 5"));
+		setLayout(new MigLayout("gap 5, ins 5"));
 		this.editor = editor;
 
 		// hardcoding new blue color scheme for consistency with images,
@@ -180,7 +180,7 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		cpButton = makeButton("Control panel", "images/button-control-panel.png");
 		rcButton = makeButton("Live tuning", "images/button-realtime-panel.png");
 		add(cpButton,"gap unrelated");
-		add(rcButton);
+		add(rcButton, "hidemode 1");
 		
 		resetButton = makeButton("Reset machine", "images/button-reset.png");
 		add(resetButton,"gap unrelated");
@@ -192,7 +192,7 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		statusLabel = new JLabel();
 		statusLabel.setFont(statusFont);
 		statusLabel.setForeground(statusColor);
-		add(statusLabel, "gap unrelated,growx");
+		add(statusLabel, "gap unrelated");
 
 		simButton.setToolTipText("This will open a window showing a rapid simulation of what toolpaths the machine is going to perform.");
 		buildButton.setToolTipText("This will start building the object on the machine.");
@@ -204,7 +204,7 @@ public class MainButtonPanel extends BGPanel implements MachineListener, ActionL
 		connectButton.setToolTipText("Connect to the machine.");
 		disconnectButton.setToolTipText("Disconnect from the machine.");
 
-		setPreferredSize(new Dimension(700,60));
+		setPreferredSize(new Dimension(750,60));
 		
 		// Update initial state
 		machineStateChangedInternal(new MachineStateChangeEvent(null, new MachineState()));

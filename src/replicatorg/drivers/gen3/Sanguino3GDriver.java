@@ -60,7 +60,9 @@ public class Sanguino3GDriver extends SerialDriver
 	
 	public Sanguino3GDriver() {
 		super();
-
+		hasEmergencyStop = true;
+		hasSoftStop = true;
+		
 		// This driver handles v1.X and v2.X firmware
 		minimumVersion = new Version(1,1);
 		preferredVersion = new Version(2,0);
@@ -439,7 +441,7 @@ public class Sanguino3GDriver extends SerialDriver
 		Base.logger.log(Level.FINE,"Queued point " + p);
 
 		// is this point even step-worthy?
-		Point5d deltaSteps = getAbsDeltaSteps(getCurrentPosition(), p);
+		Point5d deltaSteps = getAbsDeltaSteps(getCurrentPosition(false), p);
 		double masterSteps = getLongestLength(deltaSteps);
 
 		// okay, we need at least one step.
@@ -451,7 +453,7 @@ public class Sanguino3GDriver extends SerialDriver
 			double feedrate = getSafeFeedrate(delta);
 			
 			// how fast are we doing it?
-			long micros = convertFeedrateToMicros(getCurrentPosition(),
+			long micros = convertFeedrateToMicros(getCurrentPosition(false),
 					p, feedrate);
 
 			//System.err.println("Steps :"+steps.toString()+" micros "+Long.toString(micros));
@@ -536,13 +538,13 @@ public class Sanguino3GDriver extends SerialDriver
 
 		invalidatePosition();
 
-		Point5d maxFeedrates = machine.getMaximumFeedrates();
+		Point5d homingFeedrates = machine.getHomingFeedrates();
 
 		if (feedrate <= 0) {
 			// figure out our fastest feedrate.
 			feedrate = 0;
 			for (AxisId axis : machine.getAvailableAxes()) {
-				feedrate = Math.max(maxFeedrates.axis(axis),feedrate);
+				feedrate = Math.max(homingFeedrates.axis(axis),feedrate);
 			}
 		}
 		
@@ -550,7 +552,7 @@ public class Sanguino3GDriver extends SerialDriver
 		
 		for (AxisId axis : axes) {
 			flags += 1 << axis.getIndex();
-			feedrate = Math.min(feedrate, maxFeedrates.axis(axis));
+			feedrate = Math.min(feedrate, homingFeedrates.axis(axis));
 			target.setAxis(axis, 1);
 		}
 		
@@ -746,7 +748,8 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add8((byte) machine.currentTool().getIndex());
 		pb.add8(ToolCommandCode.GET_MOTOR_1_PWM.getCode());
 		PacketResponse pr = runQuery(pb.getPacket());
-
+		
+		pr.printDebug();
 		// get it
 		int pwm = pr.get8();
 
@@ -929,7 +932,7 @@ public class Sanguino3GDriver extends SerialDriver
 		pb.add8((byte) pwm);
 		runCommand(pb.getPacket());
 
-		super.setMotorSpeedPWM(pwm);
+		super.setSpindleSpeedPWM(pwm);
 	}
 
 	public void enableSpindle() throws RetryException {

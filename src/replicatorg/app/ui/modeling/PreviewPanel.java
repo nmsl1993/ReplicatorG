@@ -183,6 +183,7 @@ public class PreviewPanel extends JPanel {
 	}
 	
 	public PreviewPanel(final MainWindow mainWindow) {
+		
 		this.mainWindow = mainWindow;
 		//setLayout(new MigLayout()); 
 		setLayout(new MigLayout("fill,ins 0,gap 0"));
@@ -553,13 +554,13 @@ public class PreviewPanel extends JPanel {
 	}
 	
 	public void viewYZ() {
-		turntableAngle = 0d;
+		turntableAngle = Math.PI/2;
 		elevationAngle = Math.PI/2;
 		updateVP();	
 	}
 	public void viewXZ() {
+		turntableAngle = 0d;
 		elevationAngle = Math.PI/2;
-		turntableAngle = Math.PI/2;
 		updateVP();	
 	}
 	

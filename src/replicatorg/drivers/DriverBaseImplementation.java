@@ -76,6 +76,17 @@ public class DriverBaseImplementation implements Driver {
 
 	static public int INCREMENTAL = 1;
 
+	
+	/**
+	 * Support for emergency stop is not assumed until it is detected. Detection of this feature should be in initialization.
+	 */
+	protected boolean hasEmergencyStop = false;
+	
+	/**
+	 * Support for soft stop (e.g. for continuous jog) is not assumed until it is detected. Detection of this feature should be in initialization.
+	 */
+	protected boolean hasSoftStop = false;
+	
 	/**
 	 * Creates the driver object.
 	 */
@@ -259,20 +270,20 @@ public class DriverBaseImplementation implements Driver {
 		throw new RuntimeException("Position reconcilliation requested, but not implemented for this driver");
 	}
 	
-	public Point5d getCurrentPosition() {
+	public Point5d getCurrentPosition(boolean update) {
 		synchronized(currentPosition)
 		{
 			// Explicit null check; otherwise reconcilePosition, a potentially expensive call (including a packet
 			// transaction) will be called every time.
-			if (currentPosition.get() == null) {
-				currentPosition.compareAndSet(null, reconcilePosition());
+			if (currentPosition.get() == null || update) {
+				currentPosition.set(reconcilePosition());
 			}
 			return new Point5d(currentPosition.get());
 		}
 	}
 
 	public Point5d getPosition() {
-		return getCurrentPosition();
+		return getCurrentPosition(false);
 	}
 
 	/**
@@ -365,7 +376,7 @@ public class DriverBaseImplementation implements Driver {
 
 	public Point5d getDelta(Point5d p) {
 		Point5d delta = new Point5d();
-		Point5d current = getCurrentPosition();
+		Point5d current = getCurrentPosition(false);
 
 		delta.sub(p, current); // delta = p - current
 		delta.absolute(); // absolute value of each component
@@ -465,16 +476,26 @@ public class DriverBaseImplementation implements Driver {
 		machine.currentTool().enableMotor();
 	}
 
+	public void enableMotor(long millis) throws RetryException {
+		enableMotor();
+		delay(millis);
+		disableMotor();
+	}
+
 	public void disableMotor() throws RetryException {
 		machine.currentTool().disableMotor();
 	}
 
 	public double getMotorRPM() {
-		return machine.currentTool().getMotorSpeedReadingRPM();
+		return machine.currentTool().getMotorSpeedRPM();
 	}
 
 	public int getMotorSpeedPWM() {
 		return machine.currentTool().getMotorSpeedReadingPWM();
+	}
+
+	public double getMotorSteps() {
+		return machine.currentTool().getMotorSteps();
 	}
 
 	// TODO: These are backwards?
@@ -660,5 +681,13 @@ public class DriverBaseImplementation implements Driver {
 
 	public double getTemperatureSetting() {
 		return machine.currentTool().getTargetTemperature();
+	}
+	
+	public boolean hasSoftStop() {
+		return hasSoftStop;
+	}
+
+	public boolean hasEmergencyStop() {
+		return hasEmergencyStop;
 	}
 }
