@@ -59,6 +59,12 @@ public class RemoteListener extends Thread {
 			driver.homeAxes(r, false, 3000);
 			driver.setCurrentPosition(new Point5d());
 		}
+		else if (command.contentEquals("STOP")) {
+			Base.logger.info("Stop!");
+			driver.disableDrives();
+			driver.disableFan();
+			driver.closeValve();
+		}
 		else if (command.contentEquals("LE")) {
 			Base.logger.info("Lights on!");
 			driver.openValve();
@@ -73,7 +79,7 @@ public class RemoteListener extends Thread {
 			if (bits.length == 3) {
 				Point5d point = new Point5d();
 				point.setAxis(AxisId.X , Double.parseDouble(bits[1]));
-				point.setAxis(AxisId.Y , Double.parseDouble(bits[2]));
+				point.setAxis(AxisId.Y , -Double.parseDouble(bits[2]));
 				driver.queuePoint(point);
 			}
 		}
