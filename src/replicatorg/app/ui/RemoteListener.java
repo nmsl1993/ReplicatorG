@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 //import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -31,6 +32,7 @@ public class RemoteListener extends Thread {
 	Socket clientSocket;
 	
 	public RemoteListener(Driver driver, int port) {
+		super("remote listener");
 		this.driver = driver;
 		this.port = port;
 		
@@ -61,8 +63,8 @@ public class RemoteListener extends Thread {
 			driver.homeAxes(r, false, 5000);
 			driver.setCurrentPosition(new Point5d());
 		}
-		else if (command.contentEquals("STOP")) {
-			Base.logger.info("Stop!");
+		else if (command.contentEquals("RESET")) {
+			Base.logger.info("Reset!");
 			driver.reset();
 		}
 		else if (command.contentEquals("LE")) {
@@ -158,6 +160,7 @@ public class RemoteListener extends Thread {
 			
 			try {
 				clientSocket = serverSocket.accept();
+				clientSocket.setSoTimeout(5);
 			} catch (IOException e1) {
 				Base.logger.severe("Error accepting client socket: " + e1.getMessage());
 				break;
@@ -180,22 +183,29 @@ public class RemoteListener extends Thread {
 			
 			String inputLine;
 			
+			
 			try {
-				// For each loop, we want to:
-				// 1. If there is a new command available, or if we have any queued ones to try.
-				// 2. If there is a new one:
-				//    If this was a stop command, drop everything and stop looping.
-				//    Otherwise, add it to the queue
-				// 3. Try running whatever is at the top of the queue.
-				
-				while (((inputLine = in.readLine()) != null) || !(commandQueue.isEmpty())) {
-					if (inputLine != null) {
-						if (inputLine.startsWith("STOP")) {
-							Base.logger.severe("Stop received! Clearing command queue!");
-							commandQueue.clear();
-						}
+				while (true) {
+					// For each loop, we want to:
+					// 1. If there is a new command available, or if we have any queued ones to try.
+					// 2. If there is a new one:
+					//    If this was a stop command, drop everything and stop looping.
+					//    Otherwise, add it to the queue
+					// 3. Try running whatever is at the top of the queue.
+					inputLine = null;
+					try {
+						inputLine = in.readLine();
 						
-						commandQueue.add(inputLine);
+						if (inputLine != null) {
+							if (inputLine.startsWith("STOP")) {
+								Base.logger.severe("Stop received! Clearing command queue!");
+								commandQueue.clear();
+							}
+							
+							commandQueue.add(inputLine);
+						}
+					} catch (SocketTimeoutException e) {
+						Base.logger.severe("read timed out: " + e.getMessage());
 					}
 					
 					if (!commandQueue.isEmpty()) {
@@ -206,10 +216,14 @@ public class RemoteListener extends Thread {
 							Base.logger.severe("Error sending, must retry: " + commandQueue.peek());
 						}
 					}
+					
+					in.ready();
 				}
 			} catch (IOException e) {
-				Base.logger.severe("Got IO exception while trying to read: " + e.getMessage());
+				Base.logger.severe("Got IO exception, resetting socket: " + e.getMessage());
+				break;
 			}
+			
 		}
 		
 		// If we need to clean up, do it now.
