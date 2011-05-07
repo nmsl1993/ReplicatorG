@@ -538,21 +538,21 @@ public class Sanguino3GDriver extends SerialDriver
 
 		invalidatePosition();
 
-		Point5d homingFeedrates = machine.getHomingFeedrates();
-
-		if (feedrate <= 0) {
-			// figure out our fastest feedrate.
-			feedrate = 0;
-			for (AxisId axis : machine.getAvailableAxes()) {
-				feedrate = Math.max(homingFeedrates.axis(axis),feedrate);
-			}
-		}
+//		Point5d homingFeedrates = machine.getHomingFeedrates();
+//
+//		if (feedrate <= 0) {
+//			// figure out our fastest feedrate.
+//			feedrate = 0;
+//			for (AxisId axis : machine.getAvailableAxes()) {
+//				feedrate = Math.max(homingFeedrates.axis(axis),feedrate);
+//			}
+//		}
 		
 		Point5d target = new Point5d();
 		
 		for (AxisId axis : axes) {
 			flags += 1 << axis.getIndex();
-			feedrate = Math.min(feedrate, homingFeedrates.axis(axis));
+//			feedrate = Math.min(feedrate, homingFeedrates.axis(axis));
 			target.setAxis(axis, 1);
 		}
 		

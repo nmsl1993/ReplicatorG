@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import replicatorg.app.Base;
 import replicatorg.drivers.Driver;
@@ -56,14 +58,12 @@ public class RemoteListener extends Thread {
 			Base.logger.info("Home!");
 			EnumSet<AxisId> r = EnumSet.noneOf(AxisId.class);
 			r.add(AxisId.X);
-			driver.homeAxes(r, false, 3000);
+			driver.homeAxes(r, false, 5000);
 			driver.setCurrentPosition(new Point5d());
 		}
 		else if (command.contentEquals("STOP")) {
 			Base.logger.info("Stop!");
-			driver.disableDrives();
-			driver.disableFan();
-			driver.closeValve();
+			driver.reset();
 		}
 		else if (command.contentEquals("LE")) {
 			Base.logger.info("Lights on!");
@@ -176,20 +176,34 @@ public class RemoteListener extends Thread {
 				break;
 			}
 			
-			String inputLine;
-//				String outputLine;
+			Queue<String> commandQueue = new LinkedList<String>();
 			
-			//initiate conversation with client
+			String inputLine;
 			
 			try {
-				while ((inputLine = in.readLine()) != null) {
-					boolean finished = false;
-					while (!finished) {
+				// For each loop, we want to:
+				// 1. If there is a new command available, or if we have any queued ones to try.
+				// 2. If there is a new one:
+				//    If this was a stop command, drop everything and stop looping.
+				//    Otherwise, add it to the queue
+				// 3. Try running whatever is at the top of the queue.
+				
+				while (((inputLine = in.readLine()) != null) || !(commandQueue.isEmpty())) {
+					if (inputLine != null) {
+						if (inputLine.startsWith("STOP")) {
+							Base.logger.severe("Stop received! Clearing command queue!");
+							commandQueue.clear();
+						}
+						
+						commandQueue.add(inputLine);
+					}
+					
+					if (!commandQueue.isEmpty()) {
 						try {
-							runCommand(inputLine);
-							finished = true;
+							runCommand(commandQueue.peek());
+							commandQueue.remove();
 						} catch (RetryException e) {
-							Base.logger.severe("retrying command: " + inputLine);
+							Base.logger.severe("Error sending, must retry: " + commandQueue.peek());
 						}
 					}
 				}
