@@ -31,6 +31,7 @@ import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;
 
@@ -189,11 +190,26 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		if (build.getCode() != null) {
 			addTabForElement(build,build.getCode());
 		}
-		titleLabel.setText(build.getName());
+		try {
+			titleLabel.setText(build.getName() + ": " + countLines(Base.loadFile(build.getCode().getFile())) + " lines.");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		validate();
 		repaint();
 	}
 
+	protected int countLines(String what) {
+		char c[] = what.toCharArray();
+		int count = 0;
+		for (int i = 0; i < c.length; i++) {
+			if (c[i] == '\n')
+				count++;
+		}
+		return count;
+	}
+	
 	public void actionPerformed(ActionEvent a) {
 		ChangeEvent e = new ChangeEvent(this);
 		if (changeListener != null) changeListener.stateChanged(e);
