@@ -25,7 +25,6 @@ public abstract class BuildElement {
 		 * @param element The build element which has been updated.
 		 */
 		public void buildElementUpdate(BuildElement element);
-		public void buildElementUpdate(BuildElement element, Build build);
 	}
 	
 	private List<Listener> listeners = new LinkedList<Listener>();

@@ -55,8 +55,7 @@ import replicatorg.model.BuildElement;
  */
 public class EditorHeader extends BGPanel implements ActionListener {
 	private ButtonGroup tabGroup = new ButtonGroup();
-	private Build globalBuild;
-	
+
 	public BuildElement getSelectedElement() {
 		// Enumeration isn't iterable yet?
 		Enumeration<AbstractButton> e = tabGroup.getElements();
@@ -117,41 +116,32 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4726458
 		// This bug is almost old enough to attend high school.
 		final WeakReference<BuildElement> element;
-
+		
 		public BuildElement getBuildElement() { return element.get(); }
 
-		public TabButton(BuildElement element, Build build) {
-			buildElementUpdate(element, build); // set initial string
+		public TabButton(BuildElement element, int linecount) {
+			buildElementUpdate(element); // set initial string
 			this.element = new WeakReference<BuildElement>(element);
 			setUI(new TabButtonUI());
 			setBorder(new EmptyBorder(6,8,8,10));
 			tabGroup.add(this);
 			addActionListener(EditorHeader.this);
 			element.addListener(this);
+			editor.textarea.getLineCount();
 		}
 
-		public void buildElementUpdate(BuildElement element, Build build) {
+		public void buildElementUpdate(BuildElement element) {
 			if (element.isModified()) {
 				if(element.getType().getDisplayString().equals("gcode"))
 				{
-					try {
-						setText(element.getType().getDisplayString()+"* : "+countLines(Base.loadFile(build.getCode().getFile())) + " lines.");
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					setText(element.getType().getDisplayString()+"* : "+editor.textarea.getLineCount() + " lines.");
 				}
-				else setText(element.getType().getDisplayString());
+				else setText(element.getType().getDisplayString()+"*");
 				setFont(getFont().deriveFont(Font.BOLD));
 			} else {
 				if(element.getType().getDisplayString().equals("gcode"))
 				{
-					try {
-						setText(element.getType().getDisplayString()+" : "+countLines(Base.loadFile(build.getCode().getFile())) + " lines.");
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					setText(element.getType().getDisplayString()+" : "+editor.textarea.getLineCount() + " lines.");
 				}
 				else setText(element.getType().getDisplayString());
 				setFont(getFont().deriveFont(Font.PLAIN));
@@ -159,11 +149,6 @@ public class EditorHeader extends BGPanel implements ActionListener {
 			repaint();
 		}
 
-		@Override
-		public void buildElementUpdate(BuildElement element) {
-			// TODO Auto-generated method stub
-			
-		}
 	}
 
 	JLabel titleLabel = new JLabel("Untitled");
@@ -201,8 +186,8 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		validate();
 	}
 
-	private void addTabForElement(Build build, BuildElement element) {
-		TabButton tb = new TabButton(element, build);
+	private void addTabForElement(int linecount, Build build, BuildElement element) {
+		TabButton tb = new TabButton(element, linecount);
 		add(tb);
 		if (build.getOpenedElement() == element) { tb.doClick(); } 
 	}
@@ -210,14 +195,18 @@ public class EditorHeader extends BGPanel implements ActionListener {
 	void setBuild(Build build) {
 		removeTabs();
 		if (build.getModel() != null) {
-			addTabForElement(build,build.getModel());
+			addTabForElement(0,build,build.getModel());
 		}
 		if (build.getCode() != null) {
-			addTabForElement(build,build.getCode());
+			try {
+				addTabForElement(countLines(Base.loadFile(build.getCode().getFile())),build,build.getCode());
+			} catch (IOException e) {
+				addTabForElement(0,build,build.getCode());
+				e.printStackTrace();
+			}
 		}
 		titleLabel.setText(build.getName());
 
-		globalBuild = build;
 		validate();
 		repaint();
 	}
