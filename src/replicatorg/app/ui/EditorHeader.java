@@ -55,7 +55,8 @@ import replicatorg.model.BuildElement;
  */
 public class EditorHeader extends BGPanel implements ActionListener {
 	private ButtonGroup tabGroup = new ButtonGroup();
-
+	private Build globalBuild;
+	
 	public BuildElement getSelectedElement() {
 		// Enumeration isn't iterable yet?
 		Enumeration<AbstractButton> e = tabGroup.getElements();
@@ -65,17 +66,17 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		}
 		return null;
 	}
-	
+
 	static Color backgroundColor;
 
 	static Color textSelectedColor;
 	static Color textUnselectedColor;
- 
+
 	private ChangeListener changeListener;
 	void setChangeListener(ChangeListener listener) {
 		changeListener = listener;
 	}
-	
+
 	private class TabButtonUI extends BasicButtonUI {
 		public void paint(Graphics g,JComponent c) {
 			initTabImages();
@@ -100,7 +101,7 @@ public class EditorHeader extends BGPanel implements ActionListener {
 
 	static BufferedImage selectedTabBg;
 	static BufferedImage regularTabBg;
-	
+
 	protected void initTabImages() {
 		if (selectedTabBg == null) {
 			selectedTabBg = Base.getImage("images/tab-selected.png", this);
@@ -116,11 +117,11 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4726458
 		// This bug is almost old enough to attend high school.
 		final WeakReference<BuildElement> element;
-		
+
 		public BuildElement getBuildElement() { return element.get(); }
-		
-		public TabButton(BuildElement element) {
-			buildElementUpdate(element); // set initial string
+
+		public TabButton(BuildElement element, Build build) {
+			buildElementUpdate(element, build); // set initial string
 			this.element = new WeakReference<BuildElement>(element);
 			setUI(new TabButtonUI());
 			setBorder(new EmptyBorder(6,8,8,10));
@@ -129,20 +130,44 @@ public class EditorHeader extends BGPanel implements ActionListener {
 			element.addListener(this);
 		}
 
-		public void buildElementUpdate(BuildElement element) {
+		public void buildElementUpdate(BuildElement element, Build build) {
 			if (element.isModified()) {
-				setText(element.getType().getDisplayString()+"*");
+				if(element.getType().getDisplayString().equals("gcode"))
+				{
+					try {
+						setText(element.getType().getDisplayString()+"* : "+countLines(Base.loadFile(build.getCode().getFile())) + " lines.");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				else setText(element.getType().getDisplayString());
 				setFont(getFont().deriveFont(Font.BOLD));
 			} else {
-				setText(element.getType().getDisplayString());
+				if(element.getType().getDisplayString().equals("gcode"))
+				{
+					try {
+						setText(element.getType().getDisplayString()+" : "+countLines(Base.loadFile(build.getCode().getFile())) + " lines.");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				else setText(element.getType().getDisplayString());
 				setFont(getFont().deriveFont(Font.PLAIN));
 			}
 			repaint();
 		}
+
+		@Override
+		public void buildElementUpdate(BuildElement element) {
+			// TODO Auto-generated method stub
+			
+		}
 	}
-	
+
 	JLabel titleLabel = new JLabel("Untitled");
-	
+
 	MainWindow editor;
 
 	int fontAscent;
@@ -177,11 +202,11 @@ public class EditorHeader extends BGPanel implements ActionListener {
 	}
 
 	private void addTabForElement(Build build, BuildElement element) {
-		TabButton tb = new TabButton(element);
+		TabButton tb = new TabButton(element, build);
 		add(tb);
 		if (build.getOpenedElement() == element) { tb.doClick(); } 
 	}
-	
+
 	void setBuild(Build build) {
 		removeTabs();
 		if (build.getModel() != null) {
@@ -190,12 +215,9 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		if (build.getCode() != null) {
 			addTabForElement(build,build.getCode());
 		}
-		try {
-			titleLabel.setText(build.getName() + ": " + countLines(Base.loadFile(build.getCode().getFile())) + " lines.");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		titleLabel.setText(build.getName());
+
+		globalBuild = build;
 		validate();
 		repaint();
 	}
@@ -209,7 +231,7 @@ public class EditorHeader extends BGPanel implements ActionListener {
 		}
 		return count;
 	}
-	
+
 	public void actionPerformed(ActionEvent a) {
 		ChangeEvent e = new ChangeEvent(this);
 		if (changeListener != null) changeListener.stateChanged(e);
