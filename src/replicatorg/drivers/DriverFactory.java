@@ -101,6 +101,8 @@ public class DriverFactory {
 			return loadClass("replicatorg.drivers.NullDriver", xml);
 		else if (driverName.equals("virtualprinter"))
 			return loadClass("replicatorg.drivers.VirtualPrinter", xml);
+		else if (driverName.equals("socket"))
+			return loadClass("replicatorg.drivers.socketDriver", xml);
 		else {
 			// Load driver class 
 			Driver driver = loadClass(driverName, xml);
