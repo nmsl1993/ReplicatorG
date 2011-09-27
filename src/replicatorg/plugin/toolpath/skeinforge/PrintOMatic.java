@@ -74,9 +74,11 @@ public class PrintOMatic implements SkeinforgePreference {
 		String value = null;
 		
 		if (fullName != null) {
+			System.out.println(fullName);
 			value = Base.preferences.get(fullName, options.firstElement());
 			
 			// Store it back so that we can be assured that it is set.
+			System.out.println("fullname " + fullName + " value " + value);
 			Base.preferences.put(fullName, value);
 		}
 		target.add(new JLabel(description));
@@ -188,6 +190,7 @@ public class PrintOMatic implements SkeinforgePreference {
 		materialTypes.add("ABS");
 		materialTypes.add("PLA");
 		
+		
 		addDropDownParameter(materialPanel, "materialType",
 				"Material type:", materialTypes,
 				"Select the type of plastic to use during print");
@@ -204,7 +207,14 @@ public class PrintOMatic implements SkeinforgePreference {
 		addTextParameter(machinePanel, "driveGearDiameter",
 				"Drive Gear Diameter (mm)", "10.58",
 				"measure at teeth");
-
+		if(Base.getEditor().isDualDriver())
+		{
+		Vector<String> extruders = new Vector<String>();
+		extruders.add("Left");
+		extruders.add("Right");
+		addDropDownParameter(machinePanel, "toolheadOrientation", "Extruder: ", extruders, "select which extruder this gcode prints on");
+		}
+		
 		printOMatic.addTab("Settings", printPanel);
 		printOMatic.addTab("Plastic", materialPanel);
 		printOMatic.addTab("Extruder", machinePanel);
