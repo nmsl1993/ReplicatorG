@@ -31,48 +31,7 @@ public class SupportGenerator {
 			gcode = stripSupportLayers(gcode);
 			gcode = stripRaft(gcode);
 		}
-		/*ArrayList<String> ABS_model;
-		ArrayList<String> PLA_support;
-		//tall-agon-PLA_support_test-STRIPPED.gcode
-		//tall-agon-PLA_support_test.gcode
-		//Cathedral_Sanctuary_Left_PLA-support.gcode
-		//Cathedral_Sanctuary_Left_PLA-support-STRIPPED.gcode
 
-		File ABS_source = new File("bunny-MODEL.gcode");
-		File PLA_source = new File("bunny-SUPPORT.gcode");
-
-		File ABS_destination = new File("bunny-MODEL-STRIPPED.gcode");
-		File PLA_destination = new File("bunny-SUPPORT-STRIPPED.gcode");
-
-		ABS_destination.delete();
-		PLA_destination.delete();
-
-		ABS_model = DualStrusionWorker.readFiletoArrayList(ABS_source);
-		PLA_support = DualStrusionWorker.readFiletoArrayList(PLA_source);
-
-		System.out.println(getEndOfRaft(PLA_support));
-
-		//System.out.println("");
-
-		//DualStrusionWorker.printArrayList(ABS_model);
-		//DualStrusionWorker.printArrayList(PLA_support);
-
-		DualStrusionWorker.stripWhitespace(ABS_model);
-		DualStrusionWorker.stripWhitespace(PLA_support);
-
-		DualStrusionWorker.stripEmptyLayers(ABS_model);
-		DualStrusionWorker.stripEmptyLayers(PLA_support);
-
-		ABS_model = stripSupportLayers(ABS_model);
-		PLA_support = getSupportLayers(PLA_support);
-		//strip1050s(PLA_support);
-
-		ABS_model = stripRaft(ABS_model);
-		//DualStrusionWorker.printArrayList(ABS_model);
-		//DualStrusionWorker.printArrayList(PLA_support);
-
-		DualStrusionWorker.writeArrayListtoFile(ABS_model, ABS_destination);
-		DualStrusionWorker.writeArrayListtoFile(PLA_support, PLA_destination);*/
 	}
 
 	/**
@@ -278,20 +237,20 @@ public class SupportGenerator {
 		//System.out.println("sup_temp:" + support_temp);
 
 
-		System.out.println("sup temp/objtemp: " + support_temp + "/" + obj_temp);
+		//System.out.println("sup temp/objtemp: " + support_temp + "/" + obj_temp);
 
 		String find_sup_temp = "M104 S" + support_temp;
 		find_sup_temp = find_sup_temp.replace(".", "\\.");
 		find_sup_temp = find_sup_temp + ".*";
-		System.out.println("support temp: " + find_sup_temp);
+		//System.out.println("support temp: " + find_sup_temp);
 
 		String find_obj_temp = "M104 S" + obj_temp;
 		find_obj_temp = find_obj_temp.replace(".", "\\.");
 		find_obj_temp = find_obj_temp + ".*";
-		System.out.println("obj temp: " + find_obj_temp);
+		//System.out.println("obj temp: " + find_obj_temp);
 
 		double feed_rate = getFeedRate(gcode);
-		System.out.println(feed_rate);
+		//System.out.println(feed_rate);
 
 		for(int i = getEndOfRaft(gcode); i < length-3;  i++)
 		{
@@ -326,7 +285,7 @@ public class SupportGenerator {
 		String F_to_strip = Integer.toString((int)feed_rate*60);
 		//F_to_strip = F_to_strip.replace(".", "\\\\.");
 		F_to_strip = ".*F" + F_to_strip + ".*";
-		System.out.println("F to strip: " + F_to_strip);
+		//System.out.println("F to strip: " + F_to_strip);
 
 		length = gcode.size();
 		for(int i = getEndOfRaft(gcode); i<length-1 && !gcode.get(i).matches("\\(\\<\\/extrusion\\>\\)"); i++ ){
@@ -335,7 +294,7 @@ public class SupportGenerator {
 			{
 
 				if(!gcode.get(i).matches(F_to_strip)){
-					System.out.println("1050 MATCHED LINE: " + i );
+					System.out.println("FEEDRATE MATCHED LINE: " + i );
 					gcode.remove(i);
 					i--;
 					length--;
