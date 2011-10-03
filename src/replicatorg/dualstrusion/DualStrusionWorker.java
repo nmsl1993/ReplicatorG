@@ -16,6 +16,7 @@ import java.util.ArrayList;
  * It mostly does preprocessing work such as checking what version of SkeinForge the gcode was rendered in and stripping empty layers and whiteSpace
  *
  */
+
 public class DualStrusionWorker {
 
 	/**
@@ -483,7 +484,7 @@ public class DualStrusionWorker {
 	 * This method uses Regex to delete empty layers or layers filled only with comments
 	 * @param gcode
 	 */
-	private static void stripEmptyLayers(ArrayList<String> gcode)
+	public static void stripEmptyLayers(ArrayList<String> gcode)
 	{
 		//for(int i = 0; i < gcode.size()-2;  i++)
 		int max = gcode.size()-2;

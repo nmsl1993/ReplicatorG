@@ -31,6 +31,7 @@ public class SupportGenerator {
 			gcode = stripSupportLayers(gcode);
 			gcode = stripRaft(gcode);
 		}
+		return gcode; //placeholder
 
 	}
 
