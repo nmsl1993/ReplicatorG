@@ -1,0 +1,13 @@
+# git ignore
+# no dist files
+/dist
+dist-all
+build/jar
+build/classes
+examples/*.gcode
+*.pyc
+*.class
+\#*\#
+*~
+RepG.log
+ReplicatorG.app
