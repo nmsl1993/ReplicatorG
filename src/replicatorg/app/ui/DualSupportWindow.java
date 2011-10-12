@@ -84,7 +84,7 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 
 		cont.add(new JLabel("Select Extruder to print support material"), "split");
 		
-		String[] supportExtruders = { "Left","Right" };
+		String[] supportExtruders = {"Left","Right"};
 
 		final JComboBox supportExtruder = new JComboBox(supportExtruders);
 		supportExtruder.setSelectedIndex(1);
@@ -114,7 +114,6 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 						else
 						{
 							supportHead = Toolheads.Secondary;
-
 						}
 						genGcode();
 						gcodeFile = new File(DualStrusionWindow.replaceExtension(stlPath, "gcode"));
@@ -133,11 +132,11 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 
 		try{
 			Build p = new Build(stlPath);
-			JFrame primaryProgress = new JFrame();
-			primaryProgress.setLocation(200, 200);
+			//JFrame primaryProgress = new JFrame("Primary Progress");
+			//primaryProgress.setLocation(200, 200);
 			ToolpathGenerator generator1 = ToolpathGeneratorFactory.createSelectedGenerator();
-			ToolpathGeneratorThread tg1 = new ToolpathGeneratorThread(primaryProgress, generator1, p);
-			System.out.println(this);
+			ToolpathGeneratorThread tg1 = new ToolpathGeneratorThread(this, generator1, p);
+			
 			tg1.addListener(this);
 			tg1.start();
 
@@ -167,7 +166,7 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 		DualStrusionWorker.mergeShuffle(model, support, gcodeFile, true, true, useW);
 		}
 		Base.getEditor().handleOpenFile(result);
-
+		
 	}
 	@Override
 	public void updateGenerator(String message) {
@@ -176,3 +175,4 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 	}
 
 }
+ 
