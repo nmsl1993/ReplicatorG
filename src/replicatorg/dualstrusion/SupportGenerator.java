@@ -8,15 +8,16 @@ import java.util.ArrayList;
 
 public class SupportGenerator {
 
-
+	/*
 	public static void main(String[] args){
 
-	}
+	}*/
 
 	/**
 	 * This method generates support material GCode using your selected support material.
 	 * 
 	 */
+	
 	public static ArrayList<String> generateSupport(ArrayList<String> gcode, String type){
 		
 		
@@ -36,7 +37,7 @@ public class SupportGenerator {
 	}
 
 	/**
-	 * This method uses Regex to delete empty layers or layers filled only with comments
+	 * This method description needs to be rewritten by someone who understands what it does (looking at you tom delaney)
 	 * @param gcode
 	 */
 	public static ArrayList<String> stripSupportLayers(ArrayList<String> gcode)

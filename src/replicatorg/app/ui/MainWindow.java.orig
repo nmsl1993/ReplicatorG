@@ -224,7 +224,6 @@ ToolpathGenerator.GeneratorListener
 	JMenuItem controlPanelItem;
 	JMenuItem buildMenuItem;
 	JMenuItem dualstrusionItem;
-	JMenuItem supportDualItem;
 	JMenu changeToolheadMenu = new JMenu("Change Toolhead of GCode");
 
 	JMenu machineMenu;
@@ -933,16 +932,6 @@ ToolpathGenerator.GeneratorListener
 			}
 		});
 		menu.add(dualstrusionItem);
-		supportDualItem = new JMenuItem("Dual-Material Support");
-		supportDualItem.addActionListener(new ActionListener()
-		{
-
-			public void actionPerformed(ActionEvent arg0)
-			{
-				handleSupportDual();
-			}
-		});
-		menu.add(supportDualItem);
 		dualstrusionItem.setEnabled(false);
 		changeToolheadMenu.setEnabled(false);
 		setDualStrusionGUI();
@@ -1099,16 +1088,35 @@ ToolpathGenerator.GeneratorListener
 	{
 		dualstrusionItem.setEnabled(false);
 		changeToolheadMenu.setEnabled(false);
-		supportDualItem.setEnabled(false);
-		
-		if(isDualDriver())
+
+		String mname = Base.preferences.get("machine.name", "error");
+		System.out.println(mname);
+		try
 		{
-		dualstrusionItem.setEnabled(true);
-		changeToolheadMenu.setEnabled(true);
-		supportDualItem.setEnabled(true);
+			MachineLoader ml = new MachineLoader();
+			ml.load(mname);
+			System.out.println(ml.getMachine().getModel().getTools().size());
+			if(ml.getMachine().getModel().getTools().size() > 1)
+			{
+				dualstrusionItem.setEnabled(true);
+				changeToolheadMenu.setEnabled(true);
+
+			}
+		}
+		catch(NullPointerException e)
+		{
+
 		}
 	}
 	class MachineMenuListener implements ActionListener {
+
+		/* a quick case insensitive match function. 
+		 * @returns true of subString is in baseString (case insensitive), false otherwise
+		 **/
+		public boolean containsIgnoreCase(String baseString, String subString) {
+			return Pattern.compile(Pattern.quote(subString), Pattern.CASE_INSENSITIVE).matcher(baseString).find();
+
+		}
 		public void actionPerformed(ActionEvent e) {
 			if (machineMenu == null) {
 				System.out.println("machineMenu is null");
@@ -1124,6 +1132,16 @@ ToolpathGenerator.GeneratorListener
 			if (e.getSource() instanceof JRadioButtonMenuItem) {
 				JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
 				final String name = item.getText();
+				
+				//if new machine driver name have "Mk5" and the previous driver name does not
+				if(containsIgnoreCase(name, "MK5" ) && 
+						(containsIgnoreCase( Base.preferences.get("machine.name", null), "MK5") ==  false ) )
+				{ 
+					String msg = new String("MK6 or newer  downgrading to MK5 requires manual changes.\n Search 'Mk5 Extruder Downgrade' on http://wiki.makerbot.com for instructions.");
+					JOptionPane.showMessageDialog(null, msg,  "Warning:Manual Downgrade to MK5 Needed", JOptionPane.WARNING_MESSAGE);
+
+				}
+
 				Base.preferences.put("machine.name", name);
 				setDualStrusionGUI();
 			}
@@ -1143,7 +1161,14 @@ ToolpathGenerator.GeneratorListener
 			}
 		}
 	}
+<<<<<<< HEAD
 
+=======
+	
+	/* Function to generate a list of
+	 * supported machines to be displayed in the Driver menu item.
+	 */
+>>>>>>> 8ee7976c10292a2b8e6ea4b72517ffea3ea07963
 	protected void populateMachineMenu() {
 		machineMenu.removeAll();
 		machineMenuListener = new MachineMenuListener();
@@ -1157,8 +1182,12 @@ ToolpathGenerator.GeneratorListener
 			System.out.println("error retrieving machine list");
 			exception.printStackTrace();
 		}
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8ee7976c10292a2b8e6ea4b72517ffea3ea07963
 		Collections.sort(names);
+		
 		ButtonGroup radiogroup = new ButtonGroup();
 		for (String name : names ) {
 
@@ -1450,6 +1479,7 @@ ToolpathGenerator.GeneratorListener
 		if ( name != null ) {
 			loadMachine(name, true);
 		}
+
 	}
 
 	public void handleOnboardPrefs() {
@@ -2022,21 +2052,7 @@ ToolpathGenerator.GeneratorListener
 			editor.estimationOver();
 		}
 	}
-	public void handleSupportDual()
-	{
-		String modelPath = getBuild().getModel().getPath();
-		DualSupportWindow djw;
-		if(modelPath != null)
-		{
-			djw = new DualSupportWindow(modelPath);
 
-		}
-		else
-		{
-			djw = new DualSupportWindow();
-		}
-		djw.go();
-	}
 	public void handleDualStrusion()
 	{
 		if(getBuild().getCode() == null)
@@ -2724,10 +2740,21 @@ ToolpathGenerator.GeneratorListener
 		// 2. If the new machine uses a serial port, connect to the serial port
 		// 3. If this is a new machine, record a reference to it
 		// 4. Hook the machine to the main window.
+<<<<<<< HEAD
 
 		machineLoader.load(name);
 		// TODO: Check if the machine failed to load, and bail here if necessary?
 
+=======
+		
+		boolean loaded = machineLoader.load(name);
+		
+		if(loaded == false) {
+			Base.logger.severe("could not load machine '" + name + "' please check Driver-> <Machine Name> ");
+			return;
+		}
+		
+>>>>>>> 8ee7976c10292a2b8e6ea4b72517ffea3ea07963
 		String targetPort;
 
 		targetPort = Base.preferences.get("serial.last_selected", null);

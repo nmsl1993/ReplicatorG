@@ -103,6 +103,50 @@ public class DualStrusionWorker {
 	 * @return A reference to the completed gcode File
 	 */
 	//private static wipeArrays
+	public static File mergeShuffle(ArrayList<String> primary_lines, ArrayList<String> secondary_lines, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
+	{
+		boolean mergeSupport = true;
+		if(endGcode != null)
+		{
+		endGcode.clear(); //cleanse this just in case
+		}
+		if(startGcode != null)
+		{
+		startGcode.clear();
+		}
+		ArrayList<String> master_layer = new ArrayList<String>();
+		//
+		startGcode = readFiletoArrayList(new File("DualStrusion_Snippets/start.gcode"));
+		endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
+		
+		
+		
+		//if(checkVersion(primary_lines) &&  checkVersion(secondary_lines))
+		prepGcode(primary_lines);
+		prepGcode(secondary_lines);
+
+		primary_lines = replaceToolHeadReferences(primary_lines, Toolheads.Primary);
+		secondary_lines = replaceToolHeadReferences(secondary_lines, Toolheads.Secondary);
+		getTemps(primary_lines, secondary_lines);
+		stripStartEnd(primary_lines, replaceStart, replaceEnd);
+		stripStartEnd(secondary_lines, true, true);
+		//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
+		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
+		
+		//NOTE THERE IS A DIFFERENCE HERE! MERGE SUPPORT IS ON!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		master_layer = Layer_Helper.doMerge(primary_lines, secondary_lines, mergeSupport, useWipes);
+		
+		replaceStartEnd(master_layer);
+		modifyTempReferences(startGcode);
+		checkCrashes(master_layer);
+		writeArrayListtoFile(master_layer, dest);
+
+		return dest;
+
+
+
+
+	}
 	public static File shuffle(File primary, File secondary, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
 	{
 		if(endGcode != null)
@@ -570,7 +614,7 @@ public class DualStrusionWorker {
 	 * @param t writeThis arrayList
 	 * @param f to this Destination
 	 */
-	private static void writeArrayListtoFile(ArrayList<String> t, File f)
+	public static void writeArrayListtoFile(ArrayList<String> t, File f)
 	{
 		try{
 			FileWriter bwr = new FileWriter(f);
@@ -603,7 +647,7 @@ public class DualStrusionWorker {
 	 * @param f
 	 * @return
 	 */
-	private static ArrayList<String> readFiletoArrayList(File f)
+	public static ArrayList<String> readFiletoArrayList(File f)
 	{
 		ArrayList<String> vect = new ArrayList<String>();
 		String curline;	
