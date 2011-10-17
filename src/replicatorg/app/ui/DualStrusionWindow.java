@@ -447,6 +447,7 @@ public class DualStrusionWindow extends JFrame implements ActionListener, ItemLi
 	{
 		ToolpathGenerator generator1 = ToolpathGeneratorFactory.createSelectedGenerator();
 		ToolpathGenerator generator2 = ToolpathGeneratorFactory.createSelectedGenerator();
+		System.out.println("heere " + generator1.toString());
 		try{
 			Build p = new Build(primary.getAbsolutePath());
 			Build s = new Build(secondary.getAbsolutePath());
