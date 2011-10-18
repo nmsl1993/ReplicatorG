@@ -14,14 +14,14 @@ public class ToolpathGeneratorFactory {
 		public String name;
 		public String description;
 		public Class<?> tpClass;
-		
+
 		public ToolpathGeneratorDescriptor(String name, String description, 
 				Class<?> tpClass) {
 			this.name = name;
 			this.description = description;
 			this.tpClass = tpClass;
 		}
-	
+
 		public ToolpathGenerator instantiate() {
 			try {
 				return (ToolpathGenerator)tpClass.newInstance();
@@ -33,9 +33,9 @@ public class ToolpathGeneratorFactory {
 			return null;
 		}
 	}
-	
+
 	static private Vector<ToolpathGeneratorDescriptor> generatorList = null;
-	
+
 	public static Vector<ToolpathGeneratorDescriptor> getGeneratorList() {
 		if (generatorList == null) {
 			generatorList = buildGeneratorList();
@@ -84,7 +84,7 @@ public class ToolpathGeneratorFactory {
 				return prefs;
 			}
 		};
-		
+
 		class Skeinforge35 extends SkeinforgeGenerator {
 			public File getDefaultSkeinforgeDir() {
 		    	return Base.getApplicationFile("skein_engines/skeinforge-35/skeinforge_application");
@@ -120,12 +120,12 @@ public class ToolpathGeneratorFactory {
 				supportPref.addOption("Full support", new SkeinforgeOption("raft.csv","Empty Layers Only", "false"));
 				supportPref.addOption("Full support", new SkeinforgeOption("raft.csv","Everywhere", "true"));
 				supportPref.addOption("Full support", new SkeinforgeOption("raft.csv","Exterior Only", "false"));
-				
+
 				prefs.add(supportPref);
-				
+
 				PrintOMatic printOMatic = new PrintOMatic();
 				prefs.add(printOMatic);
-				
+
 				return prefs;
 			}
 		};
@@ -165,7 +165,7 @@ public class ToolpathGeneratorFactory {
 				supportPref.addOption("Full support", new SkeinforgeOption("raft.csv","Empty Layers Only", "false"));
 				supportPref.addOption("Full support", new SkeinforgeOption("raft.csv","Everywhere", "true"));
 				supportPref.addOption("Full support", new SkeinforgeOption("raft.csv","Exterior Only", "false"));
-				
+
 				prefs.add(supportPref);
 				return prefs;
 			}
@@ -180,8 +180,8 @@ public class ToolpathGeneratorFactory {
 				"This a recent version of skeinforge.", Skeinforge35.class));
 		list.add(new ToolpathGeneratorDescriptor("Skeinforge (31)", 
 				"This is an old version of skeinforge.", Skeinforge31.class));
-		
-		
+
+
 		return list;
 	}
 

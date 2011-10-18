@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ArrayList;
 
+import replicatorg.dualstrusion.SupportGenerator.SupportListener;
+
 /**
  * 
  * @author Noah Levy, Ben Rockhold, Will Langford
@@ -17,7 +19,7 @@ import java.util.ArrayList;
  *
  */
 
-public class DualStrusionWorker {
+public class DualStrusionWorker{
 
 	/**
 	 * <code>endGCode</code> This object holds the end.gcode, it is either instantiated from reading a file or the primary GCodes end
@@ -103,24 +105,72 @@ public class DualStrusionWorker {
 	 * @return A reference to the completed gcode File
 	 */
 	//private static wipeArrays
-	public static File mergeShuffle(ArrayList<String> primary_lines, ArrayList<String> secondary_lines, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
+	public static void mergeShuffle(Toolheads supportHead, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
 	{
+		ArrayList<String> gcodeText = readFiletoArrayList(dest);
 		boolean mergeSupport = true;
 		if(endGcode != null)
 		{
-		endGcode.clear(); //cleanse this just in case
+			endGcode.clear(); //cleanse this just in case
 		}
 		if(startGcode != null)
 		{
-		startGcode.clear();
+			startGcode.clear();
 		}
 		ArrayList<String> master_layer = new ArrayList<String>();
 		//
 		startGcode = readFiletoArrayList(new File("DualStrusion_Snippets/start.gcode"));
 		endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
-		
-		
-		
+		SupportGenerator sgt = new SupportGenerator();
+		final ArrayList<String> model, support, primary_lines, secondary_lines;
+		sgt.addListener(new SupportListener()
+		{
+			private volatile boolean oneHasCompleted = false;
+			@Override
+			public void generationComplete(GCodeType gct) {
+				if(gct == GCodeType.MODEL)
+				{
+					if(!oneHasCompleted)
+					{
+						oneHasCompleted = true;
+					}
+					else
+					{
+						complete();
+					}
+				}
+				else if(gct == GCodeType.SUPPORT)
+				{
+					if(!oneHasCompleted)
+					{
+						oneHasCompleted = true;
+					}
+					else
+					{
+						complete();
+					}
+				}
+			}
+			private void complete()
+			{
+				
+			}
+
+		});
+		model = sgt.generateSupport(gcodeText, "model");
+		support = sgt.generateSupport(gcodeText, "support");
+
+
+		if(supportHead == Toolheads.Primary)
+		{
+			primary_lines = support;
+			secondary_lines = model;
+		}
+		else
+		{
+			primary_lines = model;
+			secondary_lines = support;
+		}
 		//if(checkVersion(primary_lines) &&  checkVersion(secondary_lines))
 		prepGcode(primary_lines);
 		prepGcode(secondary_lines);
@@ -132,10 +182,10 @@ public class DualStrusionWorker {
 		stripStartEnd(secondary_lines, true, true);
 		//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
 		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
-		
+
 		//NOTE THERE IS A DIFFERENCE HERE! MERGE SUPPORT IS ON!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		master_layer = Layer_Helper.doMerge(primary_lines, secondary_lines, mergeSupport, useWipes);
-		
+
 		replaceStartEnd(master_layer);
 		modifyTempReferences(startGcode);
 		checkCrashes(master_layer);
@@ -151,11 +201,11 @@ public class DualStrusionWorker {
 	{
 		if(endGcode != null)
 		{
-		endGcode.clear(); //cleanse this just in case
+			endGcode.clear(); //cleanse this just in case
 		}
 		if(startGcode != null)
 		{
-		startGcode.clear();
+			startGcode.clear();
 		}
 		ArrayList<String> primary_lines = readFiletoArrayList(primary);
 		ArrayList<String> secondary_lines = readFiletoArrayList(secondary);
@@ -163,9 +213,9 @@ public class DualStrusionWorker {
 		//
 		startGcode = readFiletoArrayList(new File("DualStrusion_Snippets/start.gcode"));
 		endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
-		
-		
-		
+
+
+
 		//if(checkVersion(primary_lines) &&  checkVersion(secondary_lines))
 		prepGcode(primary_lines);
 		prepGcode(secondary_lines);
@@ -178,7 +228,7 @@ public class DualStrusionWorker {
 		//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
 		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
 		master_layer = Layer_Helper.doMerge(primary_lines, secondary_lines, false, useWipes);
-		
+
 		replaceStartEnd(master_layer);
 		modifyTempReferences(startGcode);
 		checkCrashes(master_layer);
@@ -242,15 +292,15 @@ public class DualStrusionWorker {
 		int length = gcode.size();
 		for(int i = 0; i < length; i++)
 		{
-			
+
 			if(s.equals("(<extrusion>)"))
 			{
 				for(int a = 0; length <)
 			}
-			
+
 		}
 	}
-	*/
+	 */
 	private static ArrayList<String> replaceToolHeadReferences(ArrayList<String> gcode, Toolheads desired_toolhead)
 	{
 		ArrayList<String> answer = new ArrayList<String>();
@@ -320,7 +370,7 @@ public class DualStrusionWorker {
 		{
 			if(checkCrash(s))
 			{
-				
+
 				crashes = true;
 			}
 		}
@@ -674,5 +724,6 @@ public class DualStrusionWorker {
 
 		return vect;
 	}
+
 
 }

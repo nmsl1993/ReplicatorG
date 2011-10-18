@@ -29,11 +29,10 @@ import net.miginfocom.swing.MigLayout;
 public class DualSupportWindow extends JFrame implements ToolpathGenerator.GeneratorListener {
 	
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;	
 	private boolean useW;
 	private String stlPath;
-	private File result;
-	File gcodeFile;
+	private File gcodeFile;
 	Toolheads supportHead;
 	
 	public DualSupportWindow(String path)
@@ -102,7 +101,6 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 		//I told the makerbot ppl this would be done for today
 		finish.addActionListener(new ActionListener()
 				{
-				
 					public void actionPerformed(ActionEvent arg0)
 					{
 						stlPath = input.getText();
@@ -150,22 +148,8 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 	@Override
 	public void generationComplete(Completion completion, Object details) {
 		
-		ArrayList<String> gcodeText = DualStrusionWorker.readFiletoArrayList(gcodeFile);
-
-		ArrayList<String> model = new ArrayList<String>();
-		ArrayList<String> support = new ArrayList<String>();
-		model = SupportGenerator.generateSupport(gcodeText, "model");
-		support = SupportGenerator.generateSupport(gcodeText, "support");
-
-		if(supportHead == Toolheads.Primary)
-		{
-		DualStrusionWorker.mergeShuffle(support, model, gcodeFile, true, true, useW);
-		}
-		else
-		{
-		DualStrusionWorker.mergeShuffle(model, support, gcodeFile, true, true, useW);
-		}
-		Base.getEditor().handleOpenFile(result);
+		DualStrusionWorker.mergeShuffle(supportHead, gcodeFile, true, true, useW);
+		Base.getEditor().handleOpenFile(gcodeFile);
 		
 	}
 	@Override

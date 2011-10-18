@@ -3,35 +3,52 @@ package replicatorg.dualstrusion;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import java.util.ArrayList;
 
-public class SupportGenerator {
+import replicatorg.dualstrusion.SupportGenerator.SupportListener.GCodeType;
+import replicatorg.plugin.toolpath.ToolpathGenerator.GeneratorListener;
+import replicatorg.plugin.toolpath.ToolpathGenerator.GeneratorListener.Completion;
 
-	/*
-	public static void main(String[] args){
+public class SupportGenerator{
+	public interface SupportListener {
+		public enum GCodeType {
+			MODEL,
+			SUPPORT
+		};
+		public void generationComplete(GCodeType gct);
+	}		
+	protected LinkedList<SupportListener> listeners = new LinkedList<SupportListener>();
 
-	}*/
-
+	public void addListener(SupportListener listener) {
+		listeners.add(listener);
+	}
 	/**
 	 * This method generates support material GCode using your selected support material.
 	 * 
 	 */
-	
-	public static ArrayList<String> generateSupport(ArrayList<String> gcode, String type){
-		
-		
+	public SupportGenerator()
+	{
+
+	}
+	public ArrayList<String> generateSupport(ArrayList<String> gcode, String type){
+
+
 		DualStrusionWorker.stripWhitespace(gcode);
 		DualStrusionWorker.stripEmptyLayers(gcode);
-		
-		
+
+
 		if(type.equals("support")){
 			gcode = getSupportLayers(gcode);
+			emitCompletion(GCodeType.SUPPORT);
 		}
 		else if(type.equals("model")){
 			gcode = stripSupportLayers(gcode);
 			gcode = stripRaft(gcode);
+			emitCompletion(GCodeType.MODEL);
 		}
+	
 		return gcode; //placeholder
 
 	}
@@ -40,7 +57,7 @@ public class SupportGenerator {
 	 * This method description needs to be rewritten by someone who understands what it does (looking at you tom delaney)
 	 * @param gcode
 	 */
-	public static ArrayList<String> stripSupportLayers(ArrayList<String> gcode)
+	public  ArrayList<String> stripSupportLayers(ArrayList<String> gcode)
 	{
 		int length = gcode.size();
 		String obj_temp = getObjectTemp(gcode);
@@ -117,7 +134,7 @@ public class SupportGenerator {
 	 * @param gcode
 	 * @return
 	 */
-	public static int getEndOfRaft(ArrayList<String> gcode){
+	public  int getEndOfRaft(ArrayList<String> gcode){
 		int raftEnd = 0;
 		for(int i=0;i<gcode.size()-1;i++){
 			if(gcode.get(i).matches("\\(\\<raftLayerEnd\\>.*$")){
@@ -133,7 +150,7 @@ public class SupportGenerator {
 	 * @param gcode
 	 * @return
 	 */
-	public static String getObjectTemp(ArrayList<String> gcode){
+	public  String getObjectTemp(ArrayList<String> gcode){
 
 		String temp = "";
 
@@ -153,13 +170,14 @@ public class SupportGenerator {
 	 * @param gcode
 	 * @return
 	 */
-	public static double getFeedRate(ArrayList<String> gcode){
+	public  double getFeedRate(ArrayList<String> gcode){
 
 		String rate = "";
 
 		for(int i=0;i<gcode.size()-1;i++){
 			if(gcode.get(i).matches("\\(\\<operatingFeedRatePerSecond\\>.*")){
 				rate = gcode.get(i).substring(gcode.get(i).indexOf(">")+2, gcode.get(i).lastIndexOf("<")-1);
+				System.out.println("READ THIS NOAH LEVS " + rate);
 				break;
 			}
 		}
@@ -175,7 +193,7 @@ public class SupportGenerator {
 	 * @return
 	 */
 
-	public static String getSupportTemp(ArrayList<String> gcode){
+	public  String getSupportTemp(ArrayList<String> gcode){
 
 		String temp = "";
 
@@ -196,7 +214,7 @@ public class SupportGenerator {
 	 * @param gcode
 	 * @return
 	 */
-	public static ArrayList<String> stripRaft(ArrayList<String> gcode){
+	public  ArrayList<String> stripRaft(ArrayList<String> gcode){
 
 		int startStrip = 0, endStrip = 0;
 
@@ -217,7 +235,7 @@ public class SupportGenerator {
 		return gcode;
 	}
 
-	/*public static String getSupportFeedrate(ArrayList<String> gcode){
+	/*public  String getSupportFeedrate(ArrayList<String> gcode){
 
 
 
@@ -227,7 +245,7 @@ public class SupportGenerator {
 	 * This method uses Regex to delete empty layers or layers filled only with comments
 	 * @param gcode
 	 */
-	public static ArrayList<String> getSupportLayers(ArrayList<String> gcode){
+	public  ArrayList<String> getSupportLayers(ArrayList<String> gcode){
 
 		int length = gcode.size();
 		String obj_temp = getObjectTemp(gcode);
@@ -318,7 +336,7 @@ public class SupportGenerator {
 		return gcode;
 	}
 
-	public static void strip1050s(ArrayList<String> gcode){
+	public  void strip1050s(ArrayList<String> gcode){
 		int length = gcode.size();
 		for(int i = 0; i<length-1; i++ ){
 			//System.out.println("1050 checking line: " + i);
@@ -332,8 +350,10 @@ public class SupportGenerator {
 			//length=gcode.size();
 		}
 	}
-
-
-
-
+	public void emitCompletion(SupportListener.GCodeType gct) 
+	{
+		for (SupportListener listener : listeners) {
+			listener.generationComplete(gct);
+		}
+	}
 }
