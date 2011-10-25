@@ -19,7 +19,7 @@ import replicatorg.dualstrusion.SupportGenerator.SupportListener;
  *
  */
 
-public class DualStrusionWorker{
+public class DualStrusionWorker implements SupportListener{
 
 	/**
 	 * <code>endGCode</code> This object holds the end.gcode, it is either instantiated from reading a file or the primary GCodes end
@@ -123,40 +123,7 @@ public class DualStrusionWorker{
 		endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
 		SupportGenerator sgt = new SupportGenerator();
 		final ArrayList<String> model, support, primary_lines, secondary_lines;
-		sgt.addListener(new SupportListener()
-		{
-			private volatile boolean oneHasCompleted = false;
-			@Override
-			public void generationComplete(GCodeType gct) {
-				if(gct == GCodeType.MODEL)
-				{
-					if(!oneHasCompleted)
-					{
-						oneHasCompleted = true;
-					}
-					else
-					{
-						complete();
-					}
-				}
-				else if(gct == GCodeType.SUPPORT)
-				{
-					if(!oneHasCompleted)
-					{
-						oneHasCompleted = true;
-					}
-					else
-					{
-						complete();
-					}
-				}
-			}
-			private void complete()
-			{
-				
-			}
-
-		});
+		sgt.addListener(this);
 		model = sgt.generateSupport(gcodeText, "model");
 		support = sgt.generateSupport(gcodeText, "support");
 
@@ -175,8 +142,8 @@ public class DualStrusionWorker{
 		prepGcode(primary_lines);
 		prepGcode(secondary_lines);
 
-		primary_lines = replaceToolHeadReferences(primary_lines, Toolheads.Primary);
-		secondary_lines = replaceToolHeadReferences(secondary_lines, Toolheads.Secondary);
+		replaceToolHeadReferences(primary_lines, Toolheads.Primary);
+		replaceToolHeadReferences(secondary_lines, Toolheads.Secondary);
 		getTemps(primary_lines, secondary_lines);
 		stripStartEnd(primary_lines, replaceStart, replaceEnd);
 		stripStartEnd( secondary_lines, true, true);
@@ -723,6 +690,12 @@ public class DualStrusionWorker{
 
 
 		return vect;
+	}
+
+	@Override
+	public void generationComplete(GCodeType gct) {
+		// TODO Auto-generated method stub
+		
 	}
 
 
