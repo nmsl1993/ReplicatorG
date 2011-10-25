@@ -179,7 +179,7 @@ public class DualStrusionWorker{
 		secondary_lines = replaceToolHeadReferences(secondary_lines, Toolheads.Secondary);
 		getTemps(primary_lines, secondary_lines);
 		stripStartEnd(primary_lines, replaceStart, replaceEnd);
-		stripStartEnd(secondary_lines, true, true);
+		stripStartEnd( secondary_lines, true, true);
 		//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
 		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
 
@@ -191,7 +191,7 @@ public class DualStrusionWorker{
 		checkCrashes(master_layer);
 		writeArrayListtoFile(master_layer, dest);
 
-		return dest;
+		//return dest;
 
 
 
