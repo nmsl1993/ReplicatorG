@@ -24,24 +24,28 @@ public class DualStrusionWorker implements SupportListener{
 	/**
 	 * <code>endGCode</code> This object holds the end.gcode, it is either instantiated from reading a file or the primary GCodes end
 	 */
-	private static ArrayList<String>endGcode;
+	private ArrayList<String>endGcode;
 	/**
 	 * <code>startGCode</code> This object holds the start.gcode, it is either instantiated from reading a file or the primary GCodes start
 	 */
-	private static ArrayList<String>startGcode;
+	private ArrayList<String>startGcode;
 	/**
 	 * <code>yDanger</code> This is the maximum Y cooridnate that a makerbot can handle, checkCrashes consults this
 	 */
-	private static float yDanger = 80.0f;
+	private float yDanger = 80.0f;
 
-	private static ArrayList<String>raftCode;
+	private ArrayList<String>raftCode;
 	/**
 	 * Strips white space and carriage returns from gcode
 	 * @param gcode source gcode
 	 */
-	public static String primaryTemp = "";
-	public static String secondaryTemp = "";
-	public static void stripWhitespace(ArrayList<String> gcode)
+	public String primaryTemp = "";
+	public String secondaryTemp = "";
+	public DualStrusionWorker()
+	{
+		
+	}
+	public void stripWhitespace(ArrayList<String> gcode)
 	{
 		for(String s : gcode)
 		{
@@ -52,7 +56,7 @@ public class DualStrusionWorker implements SupportListener{
 		}
 	}
 
-	private static void getTemps(ArrayList<String> primary, ArrayList<String> secondary)
+	private  void getTemps(ArrayList<String> primary, ArrayList<String> secondary)
 	{
 		for(String pt : primary)
 		{
@@ -77,18 +81,20 @@ public class DualStrusionWorker implements SupportListener{
 	 * This method is a testing main for directly accessing DualStrusion
 	 * @param args
 	 */
-	public static void main(String[]args)
+	/*
+	public  void main(String[]args)
 	{
 		DualStrusionConstruction dsc = new DualStrusionConstruction(new File("/home/makerbot/baghandle/ergo_bag_handle_top.gcode"), new File("/home/makerbot/baghandle/ergo_bag_handle_bottom.gcode"), new File ("/home/makerbot/baghandle/ergocombine.gcode"), true, true, true);
 		Thread th = new Thread(dsc);
 		th.run();
 		File result = dsc.getCombinedFile();
 	}
+	 */
 	/**
 	 * This is a method that calls all the preprocessing methods individually
 	 * @param gcode
 	 */
-	private static void prepGcode(ArrayList<String> gcode)
+	private  void prepGcode(ArrayList<String> gcode)
 	{
 		stripWhitespace(gcode);
 		stripEmptyLayers(gcode);
@@ -104,8 +110,8 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param uW 
 	 * @return A reference to the completed gcode File
 	 */
-	//private static wipeArrays
-	public static void mergeShuffle(Toolheads supportHead, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
+	//private  wipeArrays
+	public  void mergeShuffle(Toolheads supportHead, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
 	{
 		ArrayList<String> gcodeText = readFiletoArrayList(dest);
 		boolean mergeSupport = true;
@@ -151,7 +157,8 @@ public class DualStrusionWorker implements SupportListener{
 		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
 
 		//NOTE THERE IS A DIFFERENCE HERE! MERGE SUPPORT IS ON!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		master_layer = Layer_Helper.doMerge(primary_lines, secondary_lines, mergeSupport, useWipes);
+		Layer_Helper lh = new Layer_Helper();
+		master_layer = lh.doMerge(primary_lines, secondary_lines, mergeSupport, useWipes);
 
 		replaceStartEnd(master_layer);
 		modifyTempReferences(startGcode);
@@ -164,7 +171,7 @@ public class DualStrusionWorker implements SupportListener{
 
 
 	}
-	public static File shuffle(File primary, File secondary, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
+	public  File shuffle(File primary, File secondary, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
 	{
 		if(endGcode != null)
 		{
@@ -194,7 +201,8 @@ public class DualStrusionWorker implements SupportListener{
 		stripStartEnd(secondary_lines, true, true);
 		//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
 		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
-		master_layer = Layer_Helper.doMerge(primary_lines, secondary_lines, false, useWipes);
+		Layer_Helper lh = new Layer_Helper();
+		master_layer = lh.doMerge(primary_lines, secondary_lines, false, useWipes);
 
 		replaceStartEnd(master_layer);
 		modifyTempReferences(startGcode);
@@ -213,7 +221,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param desired_toolhead an Enum representing the desired toolhead
 	 * @return
 	 */
-	private static void modifyTempReferences(ArrayList<String> gcode)
+	private  void modifyTempReferences(ArrayList<String> gcode)
 	{
 		for(int i = 0; i < gcode.size(); i++)
 		{
@@ -229,7 +237,7 @@ public class DualStrusionWorker implements SupportListener{
 			}
 		}
 	}
-	public static void changeToolHead(File source, int Toolhead)
+	public  void changeToolHead(File source, int Toolhead)
 	{
 		startGcode = readFiletoArrayList(new File("DualStrusion_Snippets/start.gcode"));
 		endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
@@ -254,7 +262,7 @@ public class DualStrusionWorker implements SupportListener{
 		writeArrayListtoFile(changeMe, source);
 	}
 	/*
-	public static void stripRaft(ArrayList<String> gcode)
+	public  void stripRaft(ArrayList<String> gcode)
 	{
 		int length = gcode.size();
 		for(int i = 0; i < length; i++)
@@ -268,7 +276,7 @@ public class DualStrusionWorker implements SupportListener{
 		}
 	}
 	 */
-	private static ArrayList<String> replaceToolHeadReferences(ArrayList<String> gcode, Toolheads desired_toolhead)
+	private  ArrayList<String> replaceToolHeadReferences(ArrayList<String> gcode, Toolheads desired_toolhead)
 	{
 		ArrayList<String> answer = new ArrayList<String>();
 		for(String s  : gcode)
@@ -330,7 +338,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param gcode
 	 * @return A boolean represents whether the gcode risks crashing
 	 */
-	private static boolean checkCrashes(ArrayList<String> gcode)
+	private  boolean checkCrashes(ArrayList<String> gcode)
 	{
 		boolean crashes = false;
 		for(String s : gcode)
@@ -349,7 +357,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param gcode
 	 * 
 	 */
-	private static void replaceStartEnd(ArrayList<String> gcode)
+	private  void replaceStartEnd(ArrayList<String> gcode)
 	{
 
 		gcode.addAll(0, startGcode);
@@ -363,7 +371,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param replaceStart True = Dont save start False = save start
 	 * @param replaceEnd True = dont save end False = save end
 	 */
-	private static void stripStartEnd(ArrayList<String> gcode, boolean replaceStart, boolean replaceEnd)
+	private  void stripStartEnd(ArrayList<String> gcode, boolean replaceStart, boolean replaceEnd)
 	{
 		if(replaceStart)
 		{
@@ -383,7 +391,7 @@ public class DualStrusionWorker implements SupportListener{
 			saveEndGcode(gcode);	
 		}
 	}
-	private static void saveStartGcode(ArrayList<String> gcode)
+	private  void saveStartGcode(ArrayList<String> gcode)
 	{
 		for(int i = 0; i < gcode.size()-1; i++ ) //This starts 3/4 of the way thru to save time, tiny files may fail
 		{
@@ -406,7 +414,7 @@ public class DualStrusionWorker implements SupportListener{
 			}
 		}
 	}
-	private static void saveEndGcode(ArrayList<String> gcode)
+	private  void saveEndGcode(ArrayList<String> gcode)
 	{
 		for(int i = (gcode.size()/4*3); i < gcode.size()-1; i++ ) //This starts 3/4 of the way thru to save time, tiny files may fail
 		{
@@ -429,7 +437,7 @@ public class DualStrusionWorker implements SupportListener{
 			}
 		}
 	}
-	private static void stripEndGcode(ArrayList<String> gcode)
+	private  void stripEndGcode(ArrayList<String> gcode)
 	{
 		for(int i = (gcode.size()/4*3); i < gcode.size()-1; i++ ) //This starts 3/4 of the way thru to save time, tiny files may fail
 		{
@@ -451,7 +459,7 @@ public class DualStrusionWorker implements SupportListener{
 			}
 		}
 	}
-	private static void stripStartGcode(ArrayList<String> gcode)
+	private  void stripStartGcode(ArrayList<String> gcode)
 	{
 		for(int i = 0; i < gcode.size()-1; i++ ) //This starts 3/4 of the way thru to save time, tiny files may fail
 		{
@@ -477,7 +485,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param suspectLine
 	 * @return
 	 */
-	private static boolean checkCrash(String suspectLine)
+	private  boolean checkCrash(String suspectLine)
 	{
 		if(suspectLine.matches("G1 .*"))
 		{
@@ -503,7 +511,7 @@ public class DualStrusionWorker implements SupportListener{
 		}
 		return false;
 	}
-	private static void stripSurroundingLoop(ArrayList<String> gcode)
+	private  void stripSurroundingLoop(ArrayList<String> gcode)
 	{
 		for(int i = 0; i < gcode.size() -2; i++)
 		{
@@ -545,7 +553,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * This method uses Regex to delete empty layers or layers filled only with comments
 	 * @param gcode
 	 */
-	public static void stripEmptyLayers(ArrayList<String> gcode)
+	public  void stripEmptyLayers(ArrayList<String> gcode)
 	{
 		//for(int i = 0; i < gcode.size()-2;  i++)
 		int max = gcode.size()-2;
@@ -595,7 +603,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param gcode
 	 * @return A boolean of whether its an "acceptable" version of skeinforge
 	 */
-	private static boolean checkVersion(ArrayList<String> gcode)
+	private  boolean checkVersion(ArrayList<String> gcode)
 	{
 		boolean compliantSkein = false;
 		boolean compliantVer = false;
@@ -631,7 +639,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param t writeThis arrayList
 	 * @param f to this Destination
 	 */
-	public static void writeArrayListtoFile(ArrayList<String> t, File f)
+	public  void writeArrayListtoFile(ArrayList<String> t, File f)
 	{
 		try{
 			FileWriter bwr = new FileWriter(f);
@@ -652,7 +660,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * This is a debugging method for printing arrayLists of gcode, not invoked currently
 	 * @param s arrayList to print
 	 */
-	public static void printArrayList(ArrayList<String> s)
+	public  void printArrayList(ArrayList<String> s)
 	{
 		for(String t : s)
 		{
@@ -664,7 +672,7 @@ public class DualStrusionWorker implements SupportListener{
 	 * @param f
 	 * @return
 	 */
-	public static ArrayList<String> readFiletoArrayList(File f)
+	public ArrayList<String> readFiletoArrayList(File f)
 	{
 		ArrayList<String> vect = new ArrayList<String>();
 		String curline;	
@@ -695,7 +703,7 @@ public class DualStrusionWorker implements SupportListener{
 	@Override
 	public void generationComplete(GCodeType gct) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 

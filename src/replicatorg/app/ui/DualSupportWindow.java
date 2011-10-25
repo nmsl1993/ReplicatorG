@@ -148,7 +148,8 @@ public class DualSupportWindow extends JFrame implements ToolpathGenerator.Gener
 	@Override
 	public void generationComplete(Completion completion, Object details) {
 		
-		DualStrusionWorker.mergeShuffle(supportHead, gcodeFile, true, true, useW);
+		DualStrusionWorker dgen = new DualStrusionWorker();
+		dgen.mergeShuffle(supportHead, gcodeFile, true, true, useW);
 		Base.getEditor().handleOpenFile(gcodeFile);
 		
 	}

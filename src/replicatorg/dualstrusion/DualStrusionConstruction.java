@@ -50,7 +50,8 @@ public class DualStrusionConstruction implements Runnable {
 	 */
 	public void run() {
 		System.out.println("DSW primary " + primary.getName() + " secondary " + secondary.getName());
-		result = DualStrusionWorker.shuffle(primary, secondary, dest, replaceStart, replaceEnd, useWipes);
+		DualStrusionWorker dsw = new DualStrusionWorker();
+		result = dsw.shuffle(primary, secondary, dest, replaceStart, replaceEnd, useWipes);
 		Base.getEditor().handleOpenFile(result);
 	}
 	

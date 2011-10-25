@@ -34,9 +34,9 @@ public class SupportGenerator{
 	}
 	public ArrayList<String> generateSupport(ArrayList<String> gcode, String type){
 
-
-		DualStrusionWorker.stripWhitespace(gcode);
-		DualStrusionWorker.stripEmptyLayers(gcode);
+		DualStrusionWorker dsw = new DualStrusionWorker();
+		dsw.stripWhitespace(gcode);
+		dsw.stripEmptyLayers(gcode);
 
 
 		if(type.equals("support")){

@@ -895,7 +895,8 @@ ToolpathGenerator.GeneratorListener
 		{
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				DualStrusionWorker.changeToolHead(build.getCode().file, 1);
+				DualStrusionWorker dc = new DualStrusionWorker();
+				dc.changeToolHead(build.getCode().file, 1);
 				handleOpenFile(build.getCode().file);
 				try {
 					build.getCode().load();
@@ -910,7 +911,8 @@ ToolpathGenerator.GeneratorListener
 		{
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				DualStrusionWorker.changeToolHead(build.getCode().file, 0);
+				DualStrusionWorker dc = new DualStrusionWorker();
+				dc.changeToolHead(build.getCode().file, 0);
 				handleOpenFile(build.getCode().file);
 				try {
 					build.getCode().load();
@@ -2799,17 +2801,18 @@ ToolpathGenerator.GeneratorListener
 			System.out.println(extruderChoice);
 			if(isDualDriver())
 			{
+				DualStrusionWorker dc = new DualStrusionWorker();
 				if(extruderChoice.equalsIgnoreCase("left"))
 				{
 					System.out.println("performing left ops");
-					DualStrusionWorker.changeToolHead(build.getCode().file, 1);
+					dc.changeToolHead(build.getCode().file, 1);
 					handleOpenFile(build.getCode().file);
 
 				}
 				else if(extruderChoice.equalsIgnoreCase("right"))
 				{
 					System.out.println("performing right ops");
-					DualStrusionWorker.changeToolHead(build.getCode().file, 0);
+					dc.changeToolHead(build.getCode().file, 0);
 					handleOpenFile(build.getCode().file);
 
 				}
