@@ -2026,10 +2026,11 @@ ToolpathGenerator.GeneratorListener
 	}
 	public void handleSupportDual()
 	{
-		String modelPath = getBuild().getModel().getPath();
+		
 		DualSupportWindow djw;
-		if(modelPath != null)
+		if(getBuild().getModel() != null)
 		{
+			String modelPath = getBuild().getModel().getPath();
 			djw = new DualSupportWindow(modelPath);
 
 		}

@@ -21,6 +21,7 @@ import replicatorg.dualstrusion.SupportGenerator.SupportListener;
 
 public class DualStrusionWorker implements SupportListener{
 
+	private ArrayList<String> model, support;
 	/**
 	 * <code>endGCode</code> This object holds the end.gcode, it is either instantiated from reading a file or the primary GCodes end
 	 */
@@ -33,7 +34,11 @@ public class DualStrusionWorker implements SupportListener{
 	 * <code>yDanger</code> This is the maximum Y cooridnate that a makerbot can handle, checkCrashes consults this
 	 */
 	private float yDanger = 80.0f;
-
+	private boolean wipesUsed;
+	private Toolheads sHead;
+	private File tDest;
+	private boolean supportDone = false;
+	private boolean modelDone = false;
 	private ArrayList<String>raftCode;
 	/**
 	 * Strips white space and carriage returns from gcode
@@ -43,16 +48,19 @@ public class DualStrusionWorker implements SupportListener{
 	public String secondaryTemp = "";
 	public DualStrusionWorker()
 	{
-		
+
 	}
 	public void stripWhitespace(ArrayList<String> gcode)
 	{
-		for(String s : gcode)
+		if(gcode != null)
 		{
+			for(String s : gcode)
+			{
 
-			s = s.replaceAll("\n", "");  
-			s = s.replaceAll("\r", ""); 
-			s = s.trim();
+				s = s.replaceAll("\n", "");  
+				s = s.replaceAll("\r", ""); 
+				s = s.trim();
+			}
 		}
 	}
 
@@ -111,59 +119,20 @@ public class DualStrusionWorker implements SupportListener{
 	 * @return A reference to the completed gcode File
 	 */
 	//private  wipeArrays
-	public  void mergeShuffle(Toolheads supportHead, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
+	public void mergeShuffle(Toolheads supportHead, File dest, boolean replaceStart, boolean replaceEnd, boolean useWipes)
 	{
+		tDest = dest;
+		sHead = supportHead;
+		wipesUsed = useWipes;
 		ArrayList<String> gcodeText = readFiletoArrayList(dest);
-		boolean mergeSupport = true;
-		if(endGcode != null)
-		{
-			endGcode.clear(); //cleanse this just in case
-		}
-		if(startGcode != null)
-		{
-			startGcode.clear();
-		}
-		ArrayList<String> master_layer = new ArrayList<String>();
-		//
-		startGcode = readFiletoArrayList(new File("DualStrusion_Snippets/start.gcode"));
-		endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
 		SupportGenerator sgt = new SupportGenerator();
-		final ArrayList<String> model, support, primary_lines, secondary_lines;
 		sgt.addListener(this);
+
 		model = sgt.generateSupport(gcodeText, "model");
 		support = sgt.generateSupport(gcodeText, "support");
 
 
-		if(supportHead == Toolheads.Primary)
-		{
-			primary_lines = support;
-			secondary_lines = model;
-		}
-		else
-		{
-			primary_lines = model;
-			secondary_lines = support;
-		}
-		//if(checkVersion(primary_lines) &&  checkVersion(secondary_lines))
-		prepGcode(primary_lines);
-		prepGcode(secondary_lines);
 
-		replaceToolHeadReferences(primary_lines, Toolheads.Primary);
-		replaceToolHeadReferences(secondary_lines, Toolheads.Secondary);
-		getTemps(primary_lines, secondary_lines);
-		stripStartEnd(primary_lines, replaceStart, replaceEnd);
-		stripStartEnd( secondary_lines, true, true);
-		//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
-		//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
-
-		//NOTE THERE IS A DIFFERENCE HERE! MERGE SUPPORT IS ON!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		Layer_Helper lh = new Layer_Helper();
-		master_layer = lh.doMerge(primary_lines, secondary_lines, mergeSupport, useWipes);
-
-		replaceStartEnd(master_layer);
-		modifyTempReferences(startGcode);
-		checkCrashes(master_layer);
-		writeArrayListtoFile(master_layer, dest);
 
 		//return dest;
 
@@ -702,8 +671,62 @@ public class DualStrusionWorker implements SupportListener{
 
 	@Override
 	public void generationComplete(GCodeType gct) {
-		// TODO Auto-generated method stub
+		if(gct == GCodeType.SUPPORT)
+		{
+			supportDone = true;
+		}
+		if(gct == GCodeType.MODEL)
+		{
+			modelDone = true;
+		}
+		if(supportDone && modelDone)
+		{
+			boolean mergeSupport = true;
+			if(endGcode != null)
+			{
+				endGcode.clear(); //cleanse this just in case
+			}
+			if(startGcode != null)
+			{
+				startGcode.clear();
+			}
+			ArrayList<String> master_layer = new ArrayList<String>();
+			//
+			startGcode = readFiletoArrayList(new File("DualStrusion_Snippets/start.gcode"));
+			endGcode = readFiletoArrayList(new File("DualStrusion_Snippets/end.gcode"));
+			ArrayList<String> primary_lines, secondary_lines;
+			if(sHead == Toolheads.Primary)
+			{
+				primary_lines = support;
+				secondary_lines = model;
+			}
+			else
+			{
+				primary_lines = model;
+				secondary_lines = support;
+			}
+			//if(checkVersion(primary_lines) &&  checkVersion(secondary_lines))
+			prepGcode(primary_lines);
+			prepGcode(secondary_lines);
 
+			replaceToolHeadReferences(primary_lines, Toolheads.Primary);
+			replaceToolHeadReferences(secondary_lines, Toolheads.Secondary);
+			getTemps(primary_lines, secondary_lines);
+			stripStartEnd(primary_lines, true, true);
+			stripStartEnd( secondary_lines, true, true);
+			//writeArrayListtoFile(primary_lines, new File("/home/makerbot/baghandle/bh1stripped.gcode"));
+			//writeArrayListtoFile(secondary_lines, new File("/home/makerbot/baghandle/bh0stripped.gcode"));
+
+			//NOTE THERE IS A DIFFERENCE HERE! MERGE SUPPORT IS ON!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			Layer_Helper lh = new Layer_Helper();
+			master_layer = lh.doMerge(primary_lines, secondary_lines, mergeSupport, wipesUsed);
+
+			replaceStartEnd(master_layer);
+			modifyTempReferences(startGcode);
+			checkCrashes(master_layer);
+			writeArrayListtoFile(master_layer, tDest);
+
+		}
 	}
 
 
